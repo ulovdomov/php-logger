@@ -35,7 +35,7 @@ final class TracyLogger extends Logger
         $context = self::$contextService->getContext();
 
         if (\count($context) > 0) {
-            $formatted .= ' #  ' . Dumper::toPhp($context);
+            $formatted .= ' #  ' . self::dump($context);
         }
 
         $tags = self::$contextService->getTags();
@@ -47,7 +47,7 @@ final class TracyLogger extends Logger
             $tags['ip'] = $ip;
         }
 
-        $formatted .= ' ##  ' . Dumper::toPhp($tags);
+        $formatted .= ' ##  ' . self::dump($tags);
 
         if ($message instanceof FingerprintedException) {
             $fingerprint = $message->getFingerprint();

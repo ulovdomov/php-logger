@@ -18,8 +18,9 @@ final class LoggerExtension extends CompilerExtension
     public function getConfigSchema(): Schema
     {
         return Expect::structure([
-            'environment' => Expect::string()->dynamic()->nullable()->default(null),
-            'appLogDir' => Expect::string()->dynamic()->default(Debugger::$logDirectory . \DIRECTORY_SEPARATOR . 'app'),
+            'environment' => Expect::string()->dynamic()->nullable(),
+            'appLogDir' => Expect::string(Debugger::$logDirectory . \DIRECTORY_SEPARATOR . 'app')->dynamic(),
+            'tags' => Expect::arrayOf(Expect::string([])->dynamic()),
         ])->castTo('array');
     }
 
@@ -32,6 +33,7 @@ final class LoggerExtension extends CompilerExtension
         $container->addDefinition($this->prefix('contextService'))
             ->setFactory(LoggerContextService::class, [
                 'environment' => $config['environment'],
+                'tags' => $config['tags'],
             ]);
 
         $existing = 'tracy.logger';
@@ -43,9 +45,6 @@ final class LoggerExtension extends CompilerExtension
             $container->removeDefinition($existing);
             $container->addAlias($existing, $this->prefix('tracyAdapter'));
         }
-
-        $container->addDefinition($this->prefix('contextService'))
-            ->setFactory(LoggerContextService::class);
 
         if (\class_exists(ProcessorInterface::class)) {
             $container->addDefinition($this->prefix('monologProcessor'))

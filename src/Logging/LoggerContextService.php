@@ -9,16 +9,17 @@ final class LoggerContextService
     private string|null $processId = null;
 
     /**
-     * @var array<string, string>
-     */
-    private array $tags = [];
-
-    /**
      * @var array<mixed>
      */
     private array $context = [];
 
-    public function __construct(public readonly string|null $environment = null)
+    /**
+     * @param array<string, string> $tags
+     */
+    public function __construct(
+        public readonly string|null $environment = null,
+        public array $tags = [],
+    )
     {
     }
 
