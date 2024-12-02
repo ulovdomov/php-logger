@@ -2,21 +2,12 @@
 
 To make PHP package from this source:
 
-1. Replace `Php Preview Package` to `Your package name`
-2. Replace `php-preview-package` to `your-package-name`
-3. Run `make init`
-4. Run `make docker`
-5. Run `composer require --dev phpunit/phpunit ulovdomov/php-code-style phpstan/phpstan phpstan/phpstan-strict-rules`
-6. Implement your code to `src` folder
-7. Make sure to have correct value in `autoload.psr-4` in `composer.json` (see any other package for example)
-8. Make at least one test in `tests` folder
-   - Replace `BasicTest.php` with your own test
 9. Create documentation in `README.md` and replace example `ExchangeRatesSdkClient`
 10. Remove this INSTRUCTIONS section from this file
 
-# Php Preview Package
+# Php Logger
 
-Php Preview Package
+Php Logger
 
 ## Installation
 
@@ -27,7 +18,7 @@ Add following to your `composer.json`:
   "repositories": [
     {
       "type": "vcs",
-      "url": "https://github.com/ulovdomov/php-preview-package"
+      "url": "https://github.com/ulovdomov/php-logger"
     }
   ]
 }
@@ -36,7 +27,7 @@ Add following to your `composer.json`:
 And run:
 
 ```shell
-composer require ulovdomov/php-preview-package
+composer require ulovdomov/logger
 ```
 
 ## Nette DI extension

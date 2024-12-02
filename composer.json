@@ -1,6 +1,6 @@
 {
-  "name": "ulovdomov/php-preview-package",
-  "description": "Php Preview Package",
+  "name": "ulovdomov/logger",
+  "description": "Php Logger",
   "license": "MIT",
   "require": {
     "php": ">=8.1",
