@@ -1,0 +1,16 @@
+services:
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - COMPOSER_TOKEN=${COMPOSER_TOKEN}
+        - COMPOSER_HOME=/var/www/html/.composer
+    env_file: .env
+    environment:
+      COMPOSER_HOME: /var/www/html/.composer
+    volumes:
+      - ./:/var/www/html
+    command: >
+      sh -c "mkdir -p .composer &&
+             echo '{\"github-oauth\": {\"github.com\": \"${COMPOSER_TOKEN}\"}}' > .composer/auth.json && php-fpm"

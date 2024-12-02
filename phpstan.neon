@@ -1,0 +1,27 @@
+includes:
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
+#    - vendor/phpstan/phpstan-doctrine/extension.neon
+#    - vendor/phpstan/phpstan-doctrine/rules.neon
+
+parameters:
+    level: 9
+    tmpDir: temp/.php-stan-cache
+    resultCachePath: %currentWorkingDirectory%/temp/.php-stan-cache/resultCache.php
+    paths:
+        - src
+        - tests
+#    doctrine:
+#        objectManagerLoader: .infrastructure/PHPStan/object-manager.php
+    excludePaths:
+        - src/HttpClient/Utils/*
+    exceptions:
+        check:
+            missingCheckedExceptionInThrows: true
+            tooWideThrowType: true
+        uncheckedExceptionClasses:
+            - 'LogicException'
+            - 'PHPUnit\Framework\Exception'
+        checkedExceptionClasses:
+            - 'Exception'
+#    ignoreErrors:
+#        - '#Cannot access property \$.+ on array\|object\.#'

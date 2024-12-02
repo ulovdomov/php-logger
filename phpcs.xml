@@ -1,0 +1,16 @@
+<ruleset
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="./vendor/squizlabs/php_codesniffer/phpcs.xsd">
+
+    <!-- Show only relevant part of path -->
+    <arg name="basepath" value="./"/>
+
+    <!-- Configure cache -->
+    <arg name="cache" value="./temp/.php-codesniffer-cache/cache.dat"/>
+
+    <!-- Import coding-standard -->
+    <rule ref="./vendor/ulovdomov/php-code-style/ruleset.xml">
+        <!-- Because it removes @throws annotations where phpstan require it -->
+        <exclude name="SlevomatCodingStandard.Commenting.ForbiddenAnnotations.AnnotationForbidden"/>
+    </rule>
+</ruleset>

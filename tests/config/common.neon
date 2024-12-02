@@ -1,0 +1,18 @@
+slim:
+    sourceDirectories: %rootDir%/Api
+    scheme:
+        directory: %rootDir%/../schemes
+    auth:
+        apiToken: 'test_token'
+
+extensions:
+    slim: UlovDomov\Slim\DI\SlimExtension
+    psr11: Contributte\Psr11\DI\Psr11ContainerExtension
+
+services:
+    - Tests\Api\TestRouter
+
+    # Test API V1
+    - Tests\Api\V1\TestRouterV1
+    - Tests\Api\V1\Health\GetTestApiHandler
+    - Tests\Api\V1\Test\GetTestAuthApiHandler

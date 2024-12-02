@@ -1,0 +1,63 @@
+{
+  "name": "ulovdomov/php-preview-package",
+  "description": "Php Preview Package",
+  "license": "MIT",
+  "require": {
+    "php": ">=8.1",
+    "tracy/tracy": ">=2.9.0",
+    "ulovdomov/utils": ">=1.0",
+    "ramsey/uuid": ">=4.0"
+  },
+  "require-dev": {
+    "ulovdomov/php-code-style": "^1.0",
+    "phpunit/phpunit": "^10.5",
+    "phpstan/phpstan": "^1.12",
+    "phpstan/phpstan-strict-rules": "^1.6",
+    "nette/di": "^3.2",
+    "ulovdomov/test-fixtures": "^1.0",
+    "contributte/sentry": "^0.3.0",
+    "monolog/monolog": "^3.8",
+    "elastic/ecs-logging": "^2.0"
+  },
+  "suggest": {
+    "monolog/monolog": "To log API and other requests/responses",
+    "contributte/sentry": "To save logs to Sentry",
+    "elastic/ecs-logging": "To save logs familiary to ECS logging"
+  },
+  "scripts": {
+    "install": "composer install --no-interaction --no-progress --prefer-dist",
+    "cs": "mkdir -p temp/.php-codesniffer-cache && vendor/bin/phpcs --standard=phpcs.xml src tests",
+    "cs-fix": "mkdir -p temp/.php-codesniffer-cache && phpcbf --standard=phpcs.xml src tests",
+    "phpstan": "mkdir -p temp/.php-stan-cache && phpstan analyse -c phpstan.neon --memory-limit=1024M",
+    "tests": "phpunit tests --configuration tests/phpunit.xml"
+  },
+  "autoload": {
+    "psr-4": {
+      "UlovDomov\\": "src"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/Tests"
+    }
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    }
+  },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/ulovdomov/php-code-style"
+    },{
+      "type": "vcs",
+      "url": "https://github.com/ulovdomov/php-utils"
+    },{
+      "type": "vcs",
+      "url": "https://github.com/ulovdomov/php-test-fixtures"
+    }
+  ]
+}
