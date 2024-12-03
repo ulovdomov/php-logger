@@ -32,14 +32,15 @@ final class TracyLogger extends Logger
     {
         $formatted = parent::formatLogLine($message, $exceptionFile);
 
+        $formatted .= ' #  ' . self::dump(self::$contextService->getTraceInfo());
+
         $context = self::$contextService->getContext();
 
         if (\count($context) > 0) {
-            $formatted .= ' #  ' . self::dump($context);
+            $formatted .= ' ##  ' . self::dump($context);
         }
 
         $tags = self::$contextService->getTags();
-        $tags['processId'] = self::$contextService->getProcessId();
 
         $ip = self::$contextService->getIpAddress();
 
@@ -47,13 +48,13 @@ final class TracyLogger extends Logger
             $tags['ip'] = $ip;
         }
 
-        $formatted .= ' ##  ' . self::dump($tags);
+        $formatted .= ' ###  ' . self::dump($tags);
 
         if ($message instanceof FingerprintedException) {
             $fingerprint = $message->getFingerprint();
 
             if ($fingerprint !== null) {
-                $formatted .= ' ###  ' . $message->getFingerprint();
+                $formatted .= ' ####  ' . $message->getFingerprint();
             }
         }
 

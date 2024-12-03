@@ -16,7 +16,7 @@ final class MonologContextProcessor implements ProcessorInterface
 
     public function __invoke(LogRecord $record): LogRecord
     {
-        $record->extra['processId'] = $this->loggerContextService->getProcessId();
+        $record->extra['trace'] = $this->loggerContextService->getTraceInfo();
 
         $ip = $this->loggerContextService->getIpAddress();
 

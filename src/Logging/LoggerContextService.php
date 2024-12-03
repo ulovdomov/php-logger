@@ -8,6 +8,10 @@ final class LoggerContextService
 {
     private string|null $processId = null;
 
+    private string|null $spanId = null;
+
+    private string $spanStatus = 'unknown';
+
     /**
      * @var array<mixed>
      */
@@ -69,5 +73,36 @@ final class LoggerContextService
         }
 
         return $this->processId;
+    }
+
+    public function getSpanId(): string
+    {
+        if ($this->spanId === null) {
+            $this->spanId = \bin2hex(\random_bytes(8));
+        }
+
+        return $this->spanId;
+    }
+
+    public function setSpan(string|int $identifier, string|null $status = null): void
+    {
+        $spanId = \bin2hex(\hash('sha256', (string) $identifier, true));
+        $this->spanId = \substr($spanId, 0, 16);
+
+        if ($status !== null) {
+            $this->spanStatus = $status;
+        }
+    }
+
+    /**
+     * @return array<string>
+     */
+    public function getTraceInfo(): array
+    {
+        return [
+            'trace_id' => \str_replace('-', '', $this->getProcessId()),
+            'span_id' => $this->getSpanId(),
+            'status' => $this->spanStatus,
+        ];
     }
 }

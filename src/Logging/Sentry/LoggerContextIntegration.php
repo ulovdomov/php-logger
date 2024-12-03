@@ -19,8 +19,7 @@ final class LoggerContextIntegration extends BaseIntegration
 
     public function setup(HubInterface $hub, Event $event, EventHint $hint): Event|null
     {
-        $processId = $this->loggerContextService->getProcessId();
-        $event->setContext('trace', ['trace_id' => $processId]);
+        $event->setContext('trace', $this->loggerContextService->getTraceInfo());
 
         $context = $this->loggerContextService->getContext();
 

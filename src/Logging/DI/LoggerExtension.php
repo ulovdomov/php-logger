@@ -20,7 +20,7 @@ final class LoggerExtension extends CompilerExtension
         return Expect::structure([
             'environment' => Expect::string()->dynamic()->nullable(),
             'appLogDir' => Expect::string(Debugger::$logDirectory . \DIRECTORY_SEPARATOR . 'app')->dynamic(),
-            'tags' => Expect::arrayOf(Expect::string([])->dynamic()),
+            'tags' => Expect::arrayOf(Expect::string()->dynamic(), Expect::string()),
         ])->castTo('array');
     }
 
