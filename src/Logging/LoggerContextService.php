@@ -78,7 +78,11 @@ final class LoggerContextService
     public function getSpanId(): string
     {
         if ($this->spanId === null) {
-            $this->spanId = \bin2hex(\random_bytes(8));
+            try {
+                $this->spanId = \bin2hex(\random_bytes(8));
+            } catch (\Throwable) {
+                $this->spanId = self::createSpanId(\uniqid('', true));
+            }
         }
 
         return $this->spanId;
@@ -86,8 +90,7 @@ final class LoggerContextService
 
     public function setSpan(string|int $identifier, string|null $status = null): void
     {
-        $spanId = \bin2hex(\hash('sha256', (string) $identifier, true));
-        $this->spanId = \substr($spanId, 0, 16);
+        $this->spanId = self::createSpanId((string) $identifier);
 
         if ($status !== null) {
             $this->spanStatus = $status;
@@ -104,5 +107,12 @@ final class LoggerContextService
             'span_id' => $this->getSpanId(),
             'status' => $this->spanStatus,
         ];
+    }
+
+    private static function createSpanId(string $identifier): string
+    {
+        $spanId = \bin2hex(\hash('sha256', $identifier, true));
+
+        return \substr($spanId, 0, 16);
     }
 }
