@@ -6,6 +6,7 @@ use Contributte\Sentry\Integration\BaseIntegration;
 use Sentry\Event;
 use Sentry\EventHint;
 use Sentry\State\HubInterface;
+use Sentry\UserDataBag;
 use UlovDomov\Logging\FingerprintedException;
 use UlovDomov\Logging\LoggerContextService;
 
@@ -33,10 +34,10 @@ final class LoggerContextIntegration extends BaseIntegration
 
         $tags = $this->loggerContextService->getTags();
 
-        $ip = $this->loggerContextService->getIpAddress();
+        $userData = $this->loggerContextService->getUserData();
 
-        if ($ip !== null) {
-            $tags['ip'] = $ip;
+        if (\count($userData) > 0) {
+            $event->setUser(UserDataBag::createFromArray($userData));
         }
 
         if (\count($tags) > 0) {

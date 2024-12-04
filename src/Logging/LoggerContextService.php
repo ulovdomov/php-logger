@@ -10,6 +10,12 @@ final class LoggerContextService
 
     private string|null $spanId = null;
 
+    private string|int|null $userId = null;
+
+    private string|null $userEmail = null;
+
+    private string|null $username = null;
+
     private string $spanStatus = 'unknown';
 
     /**
@@ -30,6 +36,40 @@ final class LoggerContextService
     public function getIpAddress(): string|null
     {
         return $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? null;
+    }
+
+    public function setUser(string|int $id, string|null $email = null, string|null $username = null): void
+    {
+        $this->userId = $id;
+        $this->userEmail = $email;
+        $this->username = $username;
+    }
+
+    /**
+     * @return array<string|int>
+     */
+    public function getUserData(): array
+    {
+        $result = [];
+        $ip = $this->getIpAddress();
+
+        if ($ip !== null) {
+            $result['ip_address'] = $ip;
+        }
+
+        if ($this->userId !== null) {
+            $result['id'] = $this->userId;
+        }
+
+        if ($this->userEmail !== null) {
+            $result['email'] = $this->userEmail;
+        }
+
+        if ($this->username !== null) {
+            $result['username'] = $this->username;
+        }
+
+        return $result;
     }
 
     public function addTag(string $name, string|int|float $value): void

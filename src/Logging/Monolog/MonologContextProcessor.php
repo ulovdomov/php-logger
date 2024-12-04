@@ -18,10 +18,10 @@ final class MonologContextProcessor implements ProcessorInterface
     {
         $record->extra['trace'] = $this->loggerContextService->getTraceInfo();
 
-        $ip = $this->loggerContextService->getIpAddress();
+        $userData = $this->loggerContextService->getUserData();
 
-        if ($ip !== null) {
-            $record->extra['ip'] = $ip;
+        if (\count($userData) > 0) {
+            $record->extra['user'] = $userData;
         }
 
         if ($this->loggerContextService->environment !== null) {

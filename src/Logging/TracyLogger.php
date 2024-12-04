@@ -40,15 +40,17 @@ final class TracyLogger extends Logger
             $formatted .= ' ##  ' . self::dump($context);
         }
 
-        $tags = self::$contextService->getTags();
+        $userData = self::$contextService->getUserData();
 
-        $ip = self::$contextService->getIpAddress();
-
-        if ($ip !== null) {
-            $tags['ip'] = $ip;
+        if (\count($userData) > 0) {
+            $formatted .= ' | ' . self::dump($userData);
         }
 
-        $formatted .= ' ###  ' . self::dump($tags);
+        $tags = self::$contextService->getTags();
+
+        if (\count($tags) > 0) {
+            $formatted .= ' ###  ' . self::dump($tags);
+        }
 
         if ($message instanceof FingerprintedException) {
             $fingerprint = $message->getFingerprint();
