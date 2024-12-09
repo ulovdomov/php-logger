@@ -46,7 +46,7 @@ final class LoggerExtension extends CompilerExtension
             $container->addAlias($existing, $this->prefix('tracyAdapter'));
         }
 
-        if (\class_exists(ProcessorInterface::class)) {
+        if (\interface_exists(ProcessorInterface::class)) {
             $container->addDefinition($this->prefix('monologProcessor'))
                 ->setFactory(MonologContextProcessor::class);
 
