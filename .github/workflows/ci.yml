@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-22.04
     name: Build
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Write .env file
         run: echo "COMPOSER_TOKEN=${{ secrets.UD_COMPOSER_TOKEN }}" > .env
@@ -59,6 +59,6 @@ jobs:
 
       - name: "Upload_Artifacts"
         if: failure()
-        uses: "ulovdomov/github-actions/.github/actions/upload-artifacts@v1"
+        uses: "ulovdomov/github-actions/.github/actions/upload-artifacts@v2"
         with:
           log-dir: "./log"

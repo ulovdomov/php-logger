@@ -2,6 +2,7 @@
 
 namespace UlovDomov\Logging;
 
+use Nette\Utils\Json;
 use Ramsey\Uuid\Uuid;
 
 final class LoggerContextService
@@ -75,6 +76,11 @@ final class LoggerContextService
     public function addTag(string $name, string|int|float $value): void
     {
         $this->tags[$name] = (string) $value;
+    }
+
+    public function removeTag(string $name): void
+    {
+        unset($this->tags[$name]);
     }
 
     /**
