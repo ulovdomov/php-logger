@@ -2,7 +2,6 @@
 
 namespace UlovDomov\Logging;
 
-use Nette\Utils\Json;
 use Ramsey\Uuid\Uuid;
 
 final class LoggerContextService
