@@ -5,59 +5,66 @@ on:
     types: [ "opened", "synchronize", "edited", "reopened" ]
     paths-ignore:
       - "docs/**"
-      - "README.md"
   push:
     branches:
       - "**"
     paths-ignore:
       - "docs/**"
-      - "README.md"
+  schedule:
+    - cron: "0 8 * * 1" # At 08:00 on Monday
+  workflow_dispatch:
+    inputs: {}
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: "${{ github.workflow }}-${{ github.ref }}"
   cancel-in-progress: true
 
+permissions:
+  contents: "read"
+
 jobs:
-  build:
-    runs-on: ubuntu-22.04
-    name: Build
+  ci-checks:
+    name: "Tests"
+    runs-on: "${{ matrix.operating-system }}"
+
+    if: |
+      github.event_name != 'pull_request'
+      || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
+
+    strategy:
+      matrix:
+        operating-system: [ "ubuntu-latest" ]
+        php-version: ["8.1", "8.2", "8.3", "8.4"]
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Write .env file
-        run: echo "COMPOSER_TOKEN=${{ secrets.UD_COMPOSER_TOKEN }}" > .env
-
-      - name: "Docker_Compose"
-        uses: "ulovdomov/github-actions/.github/actions/docker-compose@v1"
+      - name: Set up PHP ${{ matrix.php-version }}
+        uses: shivammathur/setup-php@v2
         with:
-          command: 'docker compose -f "docker-compose.ci.yml" up -d'
-          checked-files: ".infrastructure/docker/php/Dockerfile docker-compose.ci.yml .infrastructure/docker/php/entrypoint-staging.sh .infrastructure/docker/php/php.ini"
-          composer-token: ${{ secrets.UD_COMPOSER_TOKEN }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          php-version: ${{ matrix.php-version }}
+          tools: "composer:v2"
 
-      - name: "PHP_Composer"
-        uses: "ulovdomov/github-actions/.github/actions/php-composer@v1"
-#        uses: "./.github/actions/php-composer"
-        with:
-          command: 'docker compose -f "docker-compose.ci.yml" exec -it php composer run install'
-          cache-path: ".composer/cache/files"
+      - name: Verify PHP version
+        run: php -v
 
-      - name: "PHP_CodeSniffer"
-        uses: "ulovdomov/github-actions/.github/actions/php-codesniffer@v1"
-        with:
-          command: 'docker compose -f "docker-compose.ci.yml" exec -it php composer run cs'
-          cache-path: "temp/.php-codesniffer-cache"
+      - name: Create directories
+        run: mkdir -p src temp log
 
-      - name: "PHPStan"
-        uses: "ulovdomov/github-actions/.github/actions/php-stan@v1"
-        with:
-          command: 'docker compose -f "docker-compose.ci.yml" exec -it php composer run phpstan'
-          cache-path: "temp/.php-stan-cache"
+      - name: "Composer"
+        uses: "ulovdomov/github-actions/.github/actions/php-composer@v3.0.0"
+
+      - name: Run code sniffer
+        run: composer run cs
+
+      - name: Run PhpStan
+        run: composer run phpstan
 
       - name: Run tests
-        run: docker compose -f "docker-compose.ci.yml" exec -it php composer run tests
+        run: composer run tests
 
-      - name: "Upload_Artifacts"
+      - name: "Upload Artifacts"
         if: failure()
         uses: "ulovdomov/github-actions/.github/actions/upload-artifacts@v2"
         with:
