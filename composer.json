@@ -9,7 +9,7 @@
     "ramsey/uuid": ">=4.0"
   },
   "require-dev": {
-    "ulovdomov/php-code-style": "^1.0",
+    "ulovdomov/php-code-style": "v25.03.27.1",
     "phpunit/phpunit": "^10.5",
     "phpstan/phpstan": "^1.12",
     "phpstan/phpstan-strict-rules": "^1.6",
@@ -26,9 +26,9 @@
   },
   "scripts": {
     "install": "composer install --no-interaction --no-progress --prefer-dist",
-    "cs": "mkdir -p temp/.php-codesniffer-cache && vendor/bin/phpcs --standard=phpcs.xml src tests",
-    "cs-fix": "mkdir -p temp/.php-codesniffer-cache && phpcbf --standard=phpcs.xml src tests",
-    "phpstan": "mkdir -p temp/.php-stan-cache && phpstan analyse -c phpstan.neon --memory-limit=1024M",
+    "cs": "mkdir -p temp/.php-codesniffer-cache && vendor/bin/phpcs --standard=tools/phpcs.xml src tests",
+    "cs-fix": "mkdir -p temp/.php-codesniffer-cache && phpcbf --standard=tools/phpcs.xml src tests",
+    "phpstan": "mkdir -p temp/.php-stan-cache && phpstan analyse -c tools/phpstan.neon --memory-limit=1024M",
     "tests": "phpunit tests --configuration tests/phpunit.xml"
   },
   "autoload": {
@@ -40,6 +40,17 @@
     "psr-4": {
       "Tests\\": "tests/Tests"
     }
+  },
+  "archive": {
+    "exclude": [
+      ".github/",
+      ".infrastructure/",
+      "tests/",
+      "tools/",
+      ".gitignore",
+      "docker-compose.yml",
+      "Makefile"
+    ]
   },
   "minimum-stability": "dev",
   "prefer-stable": true,

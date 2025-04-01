@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<neon vendor="ulovdomov/logger"
+      version="1"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation=".idea/intellij-neon-pro/xmlSources/Neon.xsd">
+    <extensions>
+        <extension type="UlovDomov\Logging\DI\LoggerExtension">
+            <schema>
+                <structure>
+                    <field name="environment" default="null">
+                        <string />
+                        <null />
+                    </field>
+                    <field name="appLogDir" default="logDir/app" documentation="It will use `Tracy\Debugger::$logDirectory . '/app'`">
+                        <string />
+                    </field>
+                    <field name="tags" documentation="Default tags for application">
+                        <arrayOf>
+                            <key><string /></key>
+                            <value><string /></value>
+                        </arrayOf>
+                    </field>
+                </structure>
+            </schema>
+            <services>
+                <service name="clock" type="\Brick\DateTime\Clock"/>
+                <service name="provider" type="\UlovDomov\Clock\Provider\DateTimeProvider"/>
+            </services>
+        </extension>
+    </extensions>
+</neon>

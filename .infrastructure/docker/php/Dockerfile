@@ -8,7 +8,6 @@ RUN apk --update --no-cache add \
   curl-dev \
   libxml2-dev \
   libxslt-dev \
-  postgresql-dev \
   libzip-dev \
   vim \
   make \
@@ -34,13 +33,25 @@ USER root
 
 RUN chown -R www-data:www-data .
 
-FROM base as build-dev
-
 USER www-data
 
 RUN mkdir -p .composer
 
 RUN echo "{\"github-oauth\": {\"github.com\": \"${COMPOSER_TOKEN}\"}}" > .composer/auth.json
+
+FROM base as build-local
+
+USER root
+
+# Install Xdebug
+RUN apk add --no-cache linux-headers autoconf gcc g++ make bash
+RUN pecl install xdebug
+RUN docker-php-ext-enable xdebug
+
+# Xdebug in php.ini
+COPY .infrastructure/docker/php/xdebug.ini /usr/local/etc/php/conf.d/xdebug.ini
+
+USER www-data
 
 RUN mkdir -p src temp log
 

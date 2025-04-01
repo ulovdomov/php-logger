@@ -20,9 +20,12 @@ final class TracyLogger extends Logger
     public function log(mixed $message, string $level = self::INFO)
     {
         if (\is_object($message) && !$message instanceof \Throwable) {
-            $message = $message instanceof \Stringable || \method_exists($message, '__toString')
-                ? (string) $message
-                : self::dump($message);
+            $message = $message instanceof \Stringable || \method_exists(
+                $message,
+                '__toString',
+            ) ? (string) $message : self::dump(
+                $message,
+            );
         }
 
         return parent::log($message, $level);
