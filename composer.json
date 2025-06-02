@@ -15,7 +15,7 @@
     "phpstan/phpstan": "^1.12",
     "phpstan/phpstan-strict-rules": "^1.6",
     "nette/di": "^3.2",
-    "ulovdomov/test-fixtures": "^1.0",
+    "ulovdomov/test-extras": "^1.0",
     "contributte/sentry": "^0.3.0",
     "monolog/monolog": "^3.8",
     "elastic/ecs-logging": "^2.0",
