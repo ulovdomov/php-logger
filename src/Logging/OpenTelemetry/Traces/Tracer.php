@@ -13,9 +13,9 @@ use UlovDomov\Logging\OpenTelemetry\OpenTelemetryClient;
 
 final class Tracer
 {
-    private const ATTRIBUTE_CONTEXT = 'context';
-    private const ATTRIBUTE_TAGS = 'tags';
-    private const ATTRIBUTE_USER = 'user';
+    private const string ATTRIBUTE_CONTEXT = 'context';
+    private const string ATTRIBUTE_TAGS = 'tags';
+    private const string ATTRIBUTE_USER = 'user';
 
     private TracerProvider $provider;
     private TracerInterface $tracer;
@@ -41,7 +41,7 @@ final class Tracer
     public function enable(array $attributes = []): void
     {
         if ($this->contextService !== null) {
-            $attributes = array_merge($attributes, [
+            $attributes = \array_merge($attributes, [
                 self::ATTRIBUTE_USER => $this->contextService->getUserData(),
                 self::ATTRIBUTE_TAGS => $this->contextService->getTags(),
                 self::ATTRIBUTE_CONTEXT => $this->contextService->getContext(),

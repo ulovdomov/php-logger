@@ -14,13 +14,13 @@ final class FileTransport implements TransportInterface
 {
     private string $path;
 
-    public function __construct(string $directory = null)
+    public function __construct(string|null $directory = null)
     {
-        $directory = $directory . DIRECTORY_SEPARATOR . 'open-telemetry';
+        $directory = $directory . \DIRECTORY_SEPARATOR . 'open-telemetry';
 
-        @mkdir($directory);
+        @\mkdir($directory);
 
-        $this->path = \rtrim($directory, '/\\') . DIRECTORY_SEPARATOR . 'transport.log';
+        $this->path = \rtrim($directory, '/\\') . \DIRECTORY_SEPARATOR . 'transport.log';
     }
 
     public function contentType(): string
@@ -33,7 +33,7 @@ final class FileTransport implements TransportInterface
      */
     public function send(string $payload, CancellationInterface|null $cancellation = null): FutureInterface
     {
-        \file_put_contents($this->path, $payload . PHP_EOL, FILE_APPEND | LOCK_EX);
+        \file_put_contents($this->path, $payload . \PHP_EOL, \FILE_APPEND | \LOCK_EX);
 
         return new CompletedFuture(true);
     }
