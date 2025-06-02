@@ -11,6 +11,9 @@ use Tracy\ILogger;
 use UlovDomov\Logging\LoggerContextService;
 use UlovDomov\Logging\Monolog\MonologContextProcessor;
 use UlovDomov\Logging\Monolog\MonologLoggerFactory;
+use UlovDomov\Logging\OpenTelemetry\OpenTelemetryClient;
+use UlovDomov\Logging\OpenTelemetry\Traces\Tracer;
+use UlovDomov\Logging\OpenTelemetry\TransportType;
 use UlovDomov\Logging\TracyLogger;
 
 final class LoggerExtension extends CompilerExtension
@@ -21,19 +24,43 @@ final class LoggerExtension extends CompilerExtension
             'environment' => Expect::string()->dynamic()->nullable(),
             'appLogDir' => Expect::string(Debugger::$logDirectory . \DIRECTORY_SEPARATOR . 'app')->dynamic(),
             'tags' => Expect::arrayOf(Expect::string()->dynamic(), Expect::string()),
+            'openTelemetry' => Expect::structure([
+                'traces' => Expect::structure([
+                    'name' => Expect::string()->dynamic()->default('ud-php-app'),
+                    'url' => Expect::string()->dynamic()->nullable(),
+                    'type' => Expect::anyOf(
+                        TransportType::File->value,
+                        TransportType::Grpc->value,
+                        TransportType::Http->value,
+                        TransportType::HttpProtobuf->value,
+                    )->default(
+                        TransportType::Grpc->value,
+                    ),
+                ])->castTo('array'),
+            ])->castTo('array'),
         ])->castTo('array');
     }
 
     public function loadConfiguration(): void
     {
         $container = $this->getContainerBuilder();
-        /** @var array<string> $config */
+        /**
+         * @var array{
+         *          environment: string,
+         *          appLogDir: string,
+         *          tags: array<string, string>,
+         *          openTelemetry: array{traces: array{name:string, url: string|null, type: string}}
+         *     } $config
+         */
         $config = $this->config;
+
+        $openTelemetryLoaded = $this->loadOpenTelemetry($config['openTelemetry']);
 
         $container->addDefinition($this->prefix('contextService'))
             ->setFactory(LoggerContextService::class, [
                 'environment' => $config['environment'],
                 'tags' => $config['tags'],
+                'tracer' => $openTelemetryLoaded ? $this->prefix('@tracer') : null,
             ]);
 
         $existing = 'tracy.logger';
@@ -55,5 +82,32 @@ final class LoggerExtension extends CompilerExtension
                     'logDir' => $config['appLogDir'],
                 ]);
         }
+    }
+
+    /**
+     * @param array{traces: array{name:string, url: string|null, type: string}} $config
+     */
+    private function loadOpenTelemetry(array $config): bool
+    {
+        $container = $this->getContainerBuilder();
+
+        if ($config['traces']['url'] !== null) {
+            $container->addDefinition($this->prefix('openTelemetryClient'))
+                ->setAutowired(false)
+                ->setFactory(OpenTelemetryClient::class, [
+                    'url' => $config['traces']['url'],
+                    'type' => TransportType::from($config['traces']['type']),
+                ]);
+
+            $container->addDefinition($this->prefix('tracer'))
+                ->setFactory(Tracer::class, [
+                    'name' => $config['traces']['name'],
+                    'openTelemetryClient' => $this->prefix('@openTelemetryClient'),
+                ]);
+
+            return true;
+        }
+
+        return false;
     }
 }

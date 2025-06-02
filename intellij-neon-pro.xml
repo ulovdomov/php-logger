@@ -20,6 +20,17 @@
                             <value><string /></value>
                         </arrayOf>
                     </field>
+                    <field name="openTelemetry" documentation="Default tags for application">
+                        <structure>
+                            <field name="traces">
+                                <structure>
+                                    <field name="name" default="ud-php-app"><string /></field>
+                                    <field name="url" default="null"><string /><null /></field>
+                                    <field name="type" default="grpc"><string pattern="(file|grpc|http|http-protobuf|null)" /></field>
+                                </structure>
+                            </field>
+                        </structure>
+                    </field>
                 </structure>
             </schema>
             <services>

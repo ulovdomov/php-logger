@@ -9,6 +9,7 @@
     "ramsey/uuid": ">=4.0"
   },
   "require-dev": {
+    "ext-grpc": "*",
     "ulovdomov/php-code-style": "v25.03.27.1",
     "phpunit/phpunit": "^10.5",
     "phpstan/phpstan": "^1.12",
@@ -17,12 +18,18 @@
     "ulovdomov/test-fixtures": "^1.0",
     "contributte/sentry": "^0.3.0",
     "monolog/monolog": "^3.8",
-    "elastic/ecs-logging": "^2.0"
+    "elastic/ecs-logging": "^2.0",
+    "open-telemetry/sdk": "^1.5",
+    "open-telemetry/exporter-otlp": "^1.3",
+    "open-telemetry/transport-grpc": "^1.1"
   },
   "suggest": {
     "monolog/monolog": "To log API and other requests/responses",
     "contributte/sentry": "To save logs to Sentry",
-    "elastic/ecs-logging": "To save logs familiary to ECS logging"
+    "elastic/ecs-logging": "To save logs familiary to ECS logging",
+    "open-telemetry/sdk": "To use OpenTelemetry for log traces",
+    "open-telemetry/exporter-otlp": "To use OpenTelemetry for log traces",
+    "open-telemetry/transport-grpc": "To use OpenTelemetry via GRPC"
   },
   "scripts": {
     "install": "composer install --no-interaction --no-progress --prefer-dist",
@@ -56,7 +63,9 @@
   "prefer-stable": true,
   "config": {
     "allow-plugins": {
-      "dealerdirect/phpcodesniffer-composer-installer": true
+      "dealerdirect/phpcodesniffer-composer-installer": true,
+      "php-http/discovery": true,
+      "tbachert/spi": true
     }
   },
   "repositories": [

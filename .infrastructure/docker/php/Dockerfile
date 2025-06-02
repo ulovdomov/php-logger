@@ -23,6 +23,19 @@ RUN apk --update --no-cache add \
   && docker-php-ext-install -j "$(nproc)" bcmath bz2 mysqli pdo_mysql zip intl \
   && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
+RUN apk add --no-cache \
+    build-base \
+    autoconf \
+    automake \
+    libtool \
+    pkgconfig \
+    zlib-dev \
+    openssl-dev \
+    linux-headers
+
+RUN pecl install grpc protobuf
+RUN docker-php-ext-enable grpc protobuf
+
 COPY .infrastructure/docker/php/php.ini /usr/local/etc/php/conf.d/custom_php.ini
 
 WORKDIR /var/www/html
