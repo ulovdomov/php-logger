@@ -12,5 +12,7 @@
     <rule ref="./../vendor/ulovdomov/php-code-style/ruleset.xml">
         <!-- Because it removes @throws annotations where phpstan require it -->
         <exclude name="SlevomatCodingStandard.Commenting.ForbiddenAnnotations.AnnotationForbidden"/>
+        <!-- Because need support more PHP versions -->
+        <exclude name="SlevomatCodingStandard.TypeHints.ClassConstantTypeHint.MissingNativeTypeHint"/>
     </rule>
 </ruleset>
