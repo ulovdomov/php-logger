@@ -13,9 +13,9 @@ use UlovDomov\Logging\OpenTelemetry\OpenTelemetryClient;
 
 final class Tracer
 {
-    private const string ATTRIBUTE_CONTEXT = 'context';
-    private const string ATTRIBUTE_TAGS = 'tags';
-    private const string ATTRIBUTE_USER = 'user';
+    private const ATTRIBUTE_CONTEXT = 'context';
+    private const ATTRIBUTE_TAGS = 'tags';
+    private const ATTRIBUTE_USER = 'user';
 
     private TracerProvider $provider;
     private TracerInterface $tracer;
