@@ -14,7 +14,7 @@ final class BasicTest extends TestCase
         $contextService = new LoggerContextService('test');
         self::assertSame('test', $contextService->environment);
 
-        self::assertIsString($contextService->getProcessId());
+        self::assertIsString($contextService->getTraceId());
 
         $contextService->addTag('test', 123);
         $tags = $contextService->getTags();

@@ -3,6 +3,8 @@
 namespace UlovDomov\Logging;
 
 use Ramsey\Uuid\Uuid;
+use UlovDomov\Exceptions\LogicException;
+use UlovDomov\Logging\OpenTelemetry\Traces\Tracer;
 
 final class LoggerContextService
 {
@@ -16,8 +18,6 @@ final class LoggerContextService
 
     private string|null $username = null;
 
-    private string $spanStatus = 'unknown';
-
     /**
      * @var array<mixed>
      */
@@ -29,13 +29,42 @@ final class LoggerContextService
     public function __construct(
         public readonly string|null $environment = null,
         public array $tags = [],
+        private readonly Tracer|null $tracer = null,
     )
     {
+        if ($tracer !== null) {
+            $tracer->setContextService($this);
+        }
     }
 
     public function getIpAddress(): string|null
     {
-        return $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? null;
+        $sources = [
+            $_SERVER['HTTP_X_FORWARDED_FOR'] ?? null,
+            $_SERVER['HTTP_CLIENT_IP'] ?? null,
+            $_SERVER['REMOTE_ADDR'] ?? null,
+        ];
+
+        foreach ($sources as $ip) {
+            if (!$ip) {
+                continue;
+            }
+
+            $ipList = \explode(',', $ip);
+            foreach ($ipList as $candidate) {
+                $candidate = \trim($candidate);
+
+                if (\filter_var(
+                    $candidate,
+                    \FILTER_VALIDATE_IP,
+                    \FILTER_FLAG_NO_PRIV_RANGE | \FILTER_FLAG_NO_RES_RANGE,
+                ) !== false) {
+                    return $candidate;
+                }
+            }
+        }
+
+        return null;
     }
 
     public function setUser(string|int $id, string|null $email = null, string|null $username = null): void
@@ -111,8 +140,20 @@ final class LoggerContextService
         $this->context = $context;
     }
 
+    /**
+     * @deprecated use {@link getTraceId()}
+     */
     public function getProcessId(): string
     {
+        return $this->getTraceId();
+    }
+
+    public function getTraceId(): string
+    {
+        if ($this->tracer !== null) {
+            return $this->tracer->getCurrent()->getContext()->getTraceId();
+        }
+
         if ($this->processId === null) {
             $this->processId = Uuid::uuid4()->toString();
         }
@@ -122,6 +163,10 @@ final class LoggerContextService
 
     public function getSpanId(): string
     {
+        if ($this->tracer !== null) {
+            return $this->tracer->getCurrent()->getContext()->getSpanId();
+        }
+
         if ($this->spanId === null) {
             try {
                 $this->spanId = \bin2hex(\random_bytes(8));
@@ -133,25 +178,25 @@ final class LoggerContextService
         return $this->spanId;
     }
 
-    public function setSpan(string|int $identifier, string|null $status = null): void
-    {
-        $this->spanId = self::createSpanId((string) $identifier);
-
-        if ($status !== null) {
-            $this->spanStatus = $status;
-        }
-    }
-
     /**
      * @return array<string>
      */
     public function getTraceInfo(): array
     {
         return [
-            'trace_id' => \str_replace('-', '', $this->getProcessId()),
+            'trace_id' => \str_replace('-', '', $this->getTraceId()),
             'span_id' => $this->getSpanId(),
-            'status' => $this->spanStatus,
+            'status' => 'default',
         ];
+    }
+
+    public function getTracer(): Tracer
+    {
+        if ($this->tracer === null) {
+            throw LogicException::create('Open Telemetry client is not configured.');
+        }
+
+        return $this->tracer;
     }
 
     private static function createSpanId(string $identifier): string

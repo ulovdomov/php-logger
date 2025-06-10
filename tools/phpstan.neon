@@ -23,5 +23,5 @@ parameters:
             - 'PHPUnit\Framework\Exception'
         checkedExceptionClasses:
             - 'Exception'
-#    ignoreErrors:
-#        - '#Cannot access property \$.+ on array\|object\.#'
+    ignoreErrors:
+        - '#Parameter \#2 \$attributes \(iterable<non-empty-string, array\|bool\|float\|int\|string\|null>\) of method .+ should be contravariant with parameter \$attributes \(iterable\) of method .+#'
