@@ -269,6 +269,24 @@ $current->getContext()->getTraceId();
 ```
 
 
+### StdOut logging via Monolog
+
+- To log via stdout, you need to install the `monolog/monolog` package
+- The `LoggerExtension`, upon detecting Monolog classes, will register `UlovDomov\Logging\Monolog\MonologLoggerFactory` in the DI container
+- In the application, `MonologLoggerFactory` is used as follows:
+
+```php
+/** @var \UlovDomov\Logging\Monolog\MonologLoggerFactory $monologLoggerFactory */
+$logger = $monologLoggerFactory->createStdOut('channel-name');
+
+// or alternatively $monologLoggerFactory->create('channel-name', stdOut: true);
+
+$logger->info('Request log', [/* request context and data */]);
+
+$logger->info('Response log', [/* response context and data */]);
+```
+
+
 ### API logger for ELK via Monolog
 
 - To log into ELK, you need to install the `monolog/monolog` package
