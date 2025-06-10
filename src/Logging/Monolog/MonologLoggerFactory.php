@@ -3,7 +3,9 @@
 namespace UlovDomov\Logging\Monolog;
 
 use Elastic\Monolog\Formatter\ElasticCommonSchemaFormatter;
+use Monolog\Formatter\JsonFormatter;
 use Monolog\Handler\RotatingFileHandler;
+use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Psr\Log\LoggerInterface;
 use UlovDomov\Exceptions\LogicException;
@@ -16,35 +18,49 @@ final class MonologLoggerFactory
     ) {
     }
 
-    public function createForMethod(string $method): LoggerInterface
+    public function createForMethod(string $method, bool $stdOut = false): LoggerInterface
     {
         $parts = \explode('\\', $method);
         /** @var mixed|false $lastPart */
         $lastPart = \end($parts);
 
         if ($lastPart !== false) {
-            return $this->create(\end($parts));
+            return $this->create(\end($parts), $stdOut);
         }
 
         throw new \LogicException('Can not create name from: ' . $method);
     }
 
-    public function create(string $channelName): LoggerInterface
+    public function createStdOut(string $channelName): LoggerInterface
+    {
+        return $this->create($channelName, true);
+    }
+
+    public function create(string $channelName, bool $stdOut = false): LoggerInterface
     {
         $logger = new Logger($channelName);
         $logger->pushProcessor($this->monologContextProcessor);
 
-        $handler = new RotatingFileHandler($this->logDir . \DIRECTORY_SEPARATOR . $channelName . '.log');
+        if ($stdOut) {
+            $handler = new StreamHandler('php://stdout');
+
+            $handler->setFormatter(new JsonFormatter());
+            $logger->pushHandler($handler);
+
+            return $logger;
+        }
+
+        $fileHandler = new RotatingFileHandler($this->logDir . \DIRECTORY_SEPARATOR . $channelName . '.log');
 
         if (\class_exists(ElasticCommonSchemaFormatter::class)) {
             try {
-                $handler->setFormatter(new ElasticCommonSchemaFormatter());
+                $fileHandler->setFormatter(new ElasticCommonSchemaFormatter());
             } catch (\RuntimeException $e) {
                 throw LogicException::createFromPrevious($e);
             }
         }
 
-        $logger->pushHandler($handler);
+        $logger->pushHandler($fileHandler);
 
         return $logger;
     }
