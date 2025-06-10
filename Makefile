@@ -35,10 +35,19 @@ ports:
 	@awk '/services:/ {in_services=1} in_services && /php:/ {in_php=1} in_php && /ports:/ {sub(/.*ports:[ ]*/, ""); gsub(/"/, ""); if(length($$0)) {split($$0,a,":"); print a[1]; exit} while(getline line && line ~ /^[ \t]*-[ \t]*/) {sub(/^[ \t]*-[ \t]*/, "", line); gsub(/"/, "", line); split(line,a,":"); print "XDebug on http://localhost:"a[1] "\n"; exit} exit}' docker-compose.yml
 	@awk '/services:/ {in_services=1} in_services && /adminer:/ {in_adminer=1} in_adminer && /ports:/ {sub(/.*ports:[ ]*/, ""); gsub(/"/, ""); if(length($$0)) {split($$0,a,":"); print a[1]; exit} while(getline line && line ~ /^[ \t]*-[ \t]*/) {sub(/^[ \t]*-[ \t]*/, "", line); gsub(/"/, "", line); split(line,a,":"); print "Adminer on http://localhost:"a[1] "\n"; exit} exit}' docker-compose.yml
 
-init:
+dependencies:
+	@if [ ! -f ./.composer-token.txt ]; then \
+		read -s -p "Enter Composer token: " token; \
+		echo; \
+		echo "$$token" > ./.composer-token.txt; \
+	fi
+
 	mkdir -p src temp log
+
+init:
+	@make dependencies
 	docker compose up -d
-	@make info
+	make info
 
 docker:
 	@make info

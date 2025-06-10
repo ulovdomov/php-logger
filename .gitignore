@@ -9,3 +9,4 @@ temp/*
 !temp/.gitkeep
 .DS_Store
 .composer
+.composer-token.txt
