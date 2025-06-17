@@ -4,6 +4,7 @@ namespace UlovDomov\Logging\OpenTelemetry\Metrics;
 
 use OpenTelemetry\API\Metrics\ObservableCallbackInterface;
 use OpenTelemetry\API\Metrics\ObserverInterface;
+use OpenTelemetry\API\Metrics\UpDownCounterInterface;
 use OpenTelemetry\Contrib\Otlp\MetricExporter;
 use OpenTelemetry\SDK\Metrics\MeterProvider;
 use OpenTelemetry\SDK\Metrics\MeterProviderInterface;
@@ -85,20 +86,10 @@ final class Meter
         iterable $attributes = [],
     ): void
     {
-        $key = $this->prefix($name);
-        $attributesArray = \is_array($attributes) ? $attributes : \iterator_to_array($attributes);
-
-        if ($this->store !== null) {
-            $previous = $this->store->load($key, $attributesArray);
-            $new = $previous + $amount;
-            $this->store->save($key, $attributesArray, $new);
-            $amount = $new;
-        }
-
         $this->getMetterProvider()
             ->getMeter($this->name)
-            ->createCounter($key, $unit, $description)
-            ->add($amount, $attributesArray);
+            ->createCounter($this->prefix($name), $unit, $description)
+            ->add($this->cacheValue($this->prefix($name), $amount, $attributes), $attributes);
     }
 
     /**
@@ -111,10 +102,28 @@ final class Meter
         string|null $description = null,
     ): ObservableCallbackInterface
     {
+        $key = $this->prefix($name);
+
         return $this->getMetterProvider()
             ->getMeter($this->name)
-            ->createObservableCounter($this->prefix($name), $unit, $description)
-            ->observe($callback);
+            ->createObservableCounter($key, $unit, $description)
+            ->observe(function (ObserverInterface $observer) use ($key, $callback): void {
+                $callback(new class($key, $observer, $this->store) implements ObserverInterface {
+                    public function __construct(
+                        private readonly string $key,
+                        private readonly ObserverInterface $observer,
+                        private readonly MetricValueStore $store,
+                    )
+                    {
+                    }
+
+                    public function observe(float|int $amount, iterable $attributes = []): void
+                    {
+                        $value = $this->store->load($this->key, $attributes);
+                        $this->observer->observe($value);
+                    }
+                });
+            });
     }
 
     /**
@@ -131,7 +140,7 @@ final class Meter
         $this->getMetterProvider()
             ->getMeter($this->name)
             ->createHistogram($this->prefix($name), $unit, $description)
-            ->record($amount, $attributes);
+            ->record($this->cacheValue($this->prefix($name), $amount, $attributes), $attributes);
     }
 
     /**
@@ -145,10 +154,19 @@ final class Meter
         iterable $attributes = [],
     ): void
     {
-        $this->getMetterProvider()
-            ->getMeter($this->name)
-            ->createUpDownCounter($this->prefix($name), $unit, $description)
-            ->add($amount, $attributes);
+        $this->getUpDownCounter($name, $unit, $description)
+            ->add($this->cacheValue($this->prefix($name), $amount, $attributes), $attributes);
+    }
+
+    private function getUpDownCounter(string $name, string|null $unit, string|null $description): UpDownCounterInterface
+    {
+        if (!isset($this->upDownCounters[$name])) {
+            $this->upDownCounters[$name] = $this->getMetterProvider()
+                ->getMeter($this->name)
+                ->createUpDownCounter($this->prefix($name), $unit, $description);
+        }
+
+        return $this->upDownCounters[$name];
     }
 
     /**
@@ -161,10 +179,28 @@ final class Meter
         string|null $description = null,
     ): ObservableCallbackInterface
     {
+        $key = $this->prefix($name);
+
         return $this->getMetterProvider()
             ->getMeter($this->name)
-            ->createObservableUpDownCounter($this->prefix($name), $unit, $description)
-            ->observe($callback);
+            ->createObservableUpDownCounter($key, $unit, $description)
+            ->observe(function (ObserverInterface $observer) use ($key, $callback): void {
+                $callback(new class($key, $observer, $this->store) implements ObserverInterface {
+                    public function __construct(
+                        private readonly string $key,
+                        private readonly ObserverInterface $observer,
+                        private readonly MetricValueStore $store,
+                    )
+                    {
+                    }
+
+                    public function observe(float|int $amount, iterable $attributes = []): void
+                    {
+                        $value = $this->store->load($this->key, $attributes);
+                        $this->observer->observe($value);
+                    }
+                });
+            });
     }
 
     public function end(): void
@@ -221,5 +257,27 @@ final class Meter
         }
 
         return $this->metterProvider;
+    }
+
+    /**
+     * @param iterable<non-empty-string, array<mixed>|bool|float|int|string|null> $attributes
+     */
+    private function cacheValue(
+        string $key,
+        float|int $amount,
+        array $attributes = [],
+    ): float|int
+    {
+        if ($this->store !== null) {
+            $attributesArray = \is_array($attributes) ? $attributes : \iterator_to_array($attributes);
+
+            $previous = $this->store->load($key, $attributesArray);
+            $new = $previous + $amount;
+            $this->store->save($key, $attributesArray, $new);
+
+            return $new;
+        }
+
+        return $amount;
     }
 }
