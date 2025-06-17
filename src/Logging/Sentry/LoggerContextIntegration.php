@@ -28,8 +28,10 @@ final class LoggerContextIntegration extends BaseIntegration
             $event->setContext('context', $context);
         }
 
-        if ($this->loggerContextService->environment !== null) {
-            $event->setEnvironment($this->loggerContextService->environment);
+        $environment = $this->loggerContextService->getEnvironment();
+
+        if ($environment !== null) {
+            $event->setEnvironment($environment);
         }
 
         $tags = $this->loggerContextService->getTags();

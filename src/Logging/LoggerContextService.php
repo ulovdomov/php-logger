@@ -2,76 +2,33 @@
 
 namespace UlovDomov\Logging;
 
-use Ramsey\Uuid\Uuid;
 use UlovDomov\Exceptions\LogicException;
+use UlovDomov\Logging\OpenTelemetry\Metrics\Meter;
 use UlovDomov\Logging\OpenTelemetry\Traces\Tracer;
 
 final class LoggerContextService
 {
-    private string|null $processId = null;
-
-    private string|null $spanId = null;
-
-    private string|int|null $userId = null;
-
-    private string|null $userEmail = null;
-
-    private string|null $username = null;
-
-    /**
-     * @var array<mixed>
-     */
-    private array $context = [];
-
-    /**
-     * @param array<string, string> $tags
-     */
     public function __construct(
-        public readonly string|null $environment = null,
-        public array $tags = [],
+        private readonly LoggerContext $context,
         private readonly Tracer|null $tracer = null,
+        private readonly Meter|null $meter = null,
     )
     {
-        if ($tracer !== null) {
-            $tracer->setContextService($this);
-        }
+    }
+
+    public function getEnvironment(): string|null
+    {
+        return $this->context->environment;
     }
 
     public function getIpAddress(): string|null
     {
-        $sources = [
-            $_SERVER['HTTP_X_FORWARDED_FOR'] ?? null,
-            $_SERVER['HTTP_CLIENT_IP'] ?? null,
-            $_SERVER['REMOTE_ADDR'] ?? null,
-        ];
-
-        foreach ($sources as $ip) {
-            if (!$ip) {
-                continue;
-            }
-
-            $ipList = \explode(',', $ip);
-            foreach ($ipList as $candidate) {
-                $candidate = \trim($candidate);
-
-                if (\filter_var(
-                    $candidate,
-                    \FILTER_VALIDATE_IP,
-                    \FILTER_FLAG_NO_PRIV_RANGE | \FILTER_FLAG_NO_RES_RANGE,
-                ) !== false) {
-                    return $candidate;
-                }
-            }
-        }
-
-        return null;
+        return $this->context->getIpAddress();
     }
 
     public function setUser(string|int $id, string|null $email = null, string|null $username = null): void
     {
-        $this->userId = $id;
-        $this->userEmail = $email;
-        $this->username = $username;
+        $this->context->setUser($id, $email, $username);
     }
 
     /**
@@ -86,16 +43,22 @@ final class LoggerContextService
             $result['ip_address'] = $ip;
         }
 
-        if ($this->userId !== null) {
-            $result['id'] = $this->userId;
+        $userId = $this->context->getUserId();
+
+        if ($userId !== null) {
+            $result['id'] = $userId;
         }
 
-        if ($this->userEmail !== null) {
-            $result['email'] = $this->userEmail;
+        $userId = $this->context->getUserEmail();
+
+        if ($userId !== null) {
+            $result['email'] = $userId;
         }
 
-        if ($this->username !== null) {
-            $result['username'] = $this->username;
+        $username = $this->context->getUsername();
+
+        if ($username !== null) {
+            $result['username'] = $username;
         }
 
         return $result;
@@ -103,12 +66,16 @@ final class LoggerContextService
 
     public function addTag(string $name, string|int|float $value): void
     {
-        $this->tags[$name] = (string) $value;
+        if ($this->tracer !== null && $this->tracer->isEnabled()) {
+            $this->tracer->getCurrent()->setAttribute('tags.' . $name, $value);
+        }
+
+        $this->context->addTag($name, $value);
     }
 
     public function removeTag(string $name): void
     {
-        unset($this->tags[$name]);
+        $this->context->removeTag($name);
     }
 
     /**
@@ -116,12 +83,16 @@ final class LoggerContextService
      */
     public function getTags(): array
     {
-        return $this->tags;
+        return $this->context->getTags();
     }
 
     public function addContext(string|int $key, mixed $value): void
     {
-        $this->context[$key] = $value;
+        $this->context->addContext($key, $value);
+
+        if ($this->tracer !== null && $this->tracer->isEnabled()) {
+            $this->tracer->getCurrent()->setAttribute('context.attributes', $this->context->getContext());
+        }
     }
 
     /**
@@ -129,7 +100,7 @@ final class LoggerContextService
      */
     public function getContext(): array
     {
-        return $this->context;
+        return $this->context->getContext();
     }
 
     /**
@@ -137,7 +108,11 @@ final class LoggerContextService
      */
     public function setContext(array $context): void
     {
-        $this->context = $context;
+        if ($this->tracer !== null && $this->tracer->isEnabled()) {
+            $this->tracer->getCurrent()->setAttribute('context.attributes', $context);
+        }
+
+        $this->context->setContext($context);
     }
 
     /**
@@ -150,32 +125,20 @@ final class LoggerContextService
 
     public function getTraceId(): string
     {
-        if ($this->tracer !== null) {
+        if ($this->tracer !== null && $this->tracer->isEnabled()) {
             return $this->tracer->getCurrent()->getContext()->getTraceId();
         }
 
-        if ($this->processId === null) {
-            $this->processId = Uuid::uuid4()->toString();
-        }
-
-        return $this->processId;
+        return $this->context->getTraceId();
     }
 
     public function getSpanId(): string
     {
-        if ($this->tracer !== null) {
+        if ($this->tracer !== null && $this->tracer->isEnabled()) {
             return $this->tracer->getCurrent()->getContext()->getSpanId();
         }
 
-        if ($this->spanId === null) {
-            try {
-                $this->spanId = \bin2hex(\random_bytes(8));
-            } catch (\Throwable) {
-                $this->spanId = self::createSpanId(\uniqid('', true));
-            }
-        }
-
-        return $this->spanId;
+        return $this->context->getSpanId();
     }
 
     /**
@@ -193,16 +156,18 @@ final class LoggerContextService
     public function getTracer(): Tracer
     {
         if ($this->tracer === null) {
-            throw LogicException::create('Open Telemetry client is not configured.');
+            throw LogicException::create('Open Telemetry tracer is not configured.');
         }
 
         return $this->tracer;
     }
 
-    private static function createSpanId(string $identifier): string
+    public function getMeter(): Meter
     {
-        $spanId = \bin2hex(\hash('sha256', $identifier, true));
+        if ($this->meter === null) {
+            throw LogicException::create('Open Telemetry metrics are not configured.');
+        }
 
-        return \substr($spanId, 0, 16);
+        return $this->meter;
     }
 }
