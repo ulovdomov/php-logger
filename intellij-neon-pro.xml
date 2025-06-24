@@ -22,9 +22,23 @@
                     </field>
                     <field name="openTelemetry" documentation="Default tags for application">
                         <structure>
+                            <field name="name" default="unknown-ud-app"><string /></field>
+                            <field name="version" default="0.0.0"><string /></field>
+                            <field name="namespace" default="ud-php-app"><string /></field>
+                            <field name="resourceDetectors">
+                                <listOf>
+                                    <value><type value="OpenTelemetry\SDK\Resource\ResourceDetectorInterface" /></value>
+                                </listOf>
+                            </field>
                             <field name="traces">
                                 <structure>
-                                    <field name="name" default="ud-php-app"><string /></field>
+                                    <field name="url" default="null"><string /><null /></field>
+                                    <field name="type" default="grpc"><string pattern="(file|grpc|http|http-protobuf|null)" /></field>
+                                </structure>
+                            </field>
+                            <field name="metrics">
+                                <structure>
+                                    <field name="prefix" default="udapp"><string /></field>
                                     <field name="url" default="null"><string /><null /></field>
                                     <field name="type" default="grpc"><string pattern="(file|grpc|http|http-protobuf|null)" /></field>
                                 </structure>

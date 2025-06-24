@@ -3,16 +3,17 @@
 namespace Tests\Package;
 
 use PHPUnit\Framework\TestCase;
+use UlovDomov\Logging\LoggerContext;
 use UlovDomov\Logging\LoggerContextService;
 
 require_once __DIR__ . '/../../../vendor/autoload.php';
 
-final class BasicTest extends TestCase
+final class LoggerContextServiceTest extends TestCase
 {
     public function testBasic(): void
     {
-        $contextService = new LoggerContextService('test');
-        self::assertSame('test', $contextService->environment);
+        $contextService = new LoggerContextService(new LoggerContext('test'));
+        self::assertSame('test', $contextService->getEnvironment());
 
         self::assertIsString($contextService->getTraceId());
 

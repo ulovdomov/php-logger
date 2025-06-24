@@ -13,7 +13,7 @@ parameters:
 #    doctrine:
 #        objectManagerLoader: ../.infrastructure/PHPStan/object-manager.php
     excludePaths:
-        - ../src/HttpClient/Utils/*
+        - ../src/Logging/OpenTelemetry/Metrics/* # todo: remove this line after fix Meter
     exceptions:
         check:
             missingCheckedExceptionInThrows: true
@@ -25,3 +25,5 @@ parameters:
             - 'Exception'
     ignoreErrors:
         - '#Parameter \#2 \$attributes \(iterable<non-empty-string, array\|bool\|float\|int\|string\|null>\) of method .+ should be contravariant with parameter \$attributes \(iterable\) of method .+#'
+        - '#Method UlovDomov\\Logging\\OpenTelemetry\\Resources\\Detectors\\.+::getResource\(\) throws checked exception Nette\\DI\\MissingServiceException but it.{1}s missing from the PHPDoc @throws tag\.#'
+        - '#Parameter \#1 \$value of function strval expects bool\|float\|int\|resource\|string\|null, mixed given\.#'

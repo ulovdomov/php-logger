@@ -38,15 +38,19 @@ And configure it:
 
 ```neon
 logger:
-    environment: %env.ENVIRONMENT%         # default is: null
-    appLogDir: %logDir%/app                # default is: Debugger::$logDirectory . '/app'
+    environment: %env.ENVIRONMENT%            # default is: null
+    appLogDir: %logDir%/app                   # default is: Debugger::$logDirectory . '/app'
     openTelemetry:
+        name: 'name-of-my-app'                # app name for open-telemetry
+        version: '1.0.0'                      # version of app (default: 0.0.0)
+        namespace: 'ud-php-app'               # namespace of app (default: ud-php-app)
+        resourceDetectors:                    # custom resource detectors for open-telemetry
+            - @MyCustomResourceDetector
         traces:
-            name: 'name-of-my-app'            # name for tracer
             url: 'https://example.com:4317'   # endpoint URL address with port (this enable traces)
-            type: 'grpc'                      # can use more transport types (grpc, http, http-protobuf)
+            type: 'grpc'                      # can use more transport types (grpc, http, http-protobuf, file, null)
     tags:
-        app: 'data-source'                 # specific tags for app
+        app: 'data-source'                    # specific tags for app
 ```
 
 ## Usage
@@ -118,6 +122,13 @@ sentry:
             Sentry\Integration\ModulesIntegration()
             Sentry\Integration\RequestIntegration(null)
             Sentry\Integration\TransactionIntegration()
+
+            # Nette
+            #Contributte\Sentry\Integration\NetteApplicationIntegration(),
+            #Contributte\Sentry\Integration\NetteSecurityIntegration(),
+            #Contributte\Sentry\Integration\NetteSessionIntegration(),
+            #Contributte\Sentry\Integration\ExtraIntegration([]),
+
             UlovDomov\Logging\Sentry\LoggerContextIntegration()    # This is IMPORTANT
         ]
 ```
@@ -129,6 +140,57 @@ For local development, it is advisable to disable Sentry entirely:
 ```neon
 sentry:
     enable: false
+```
+
+## OpenTelemetry resource configuration
+
+Install the following required packages:
+
+```shell
+composer require open-telemetry/sdk open-telemetry/exporter-otlp
+```
+
+And configure it:
+
+```neon
+    openTelemetry:
+        name: 'name-of-my-app'                # app name for open-telemetry
+        version: '1.0.0'                      # version of app (default: 0.0.0)
+        namespace: 'ud-php-app'               # namespace of app (default: ud-php-app)
+        resourceDetectors:                    # custom resource detectors for open-telemetry
+            - @MyCustomResourceDetector
+```
+
+### Resource detectors for Slim FW
+
+‼️You also need to configure `SlimHttpResourceDetector` service as middleware in Slim APP. ‼️
+
+Configure the following resource detectors:
+
+```neon
+services:
+    slimResourceDetector: UlovDomov\Logging\OpenTelemetry\Resources\Detectors\SlimHttpResourceDetector
+
+logger:
+    openTelemetry:
+        # ... other configuration
+        resourceDetectors:
+            - @slimResourceDetector
+```
+
+### Resource detectors for Nette FW
+
+Configure the following resource detectors:
+
+```neon
+logger:
+    openTelemetry:
+        # ... other configuration
+        resourceDetectors:
+            - UlovDomov\Logging\OpenTelemetry\Resources\Detectors\NetteApplicationResourceDetector()
+            - UlovDomov\Logging\OpenTelemetry\Resources\Detectors\NetteHttpResourceDetector()
+            - UlovDomov\Logging\OpenTelemetry\Resources\Detectors\NetteSecurityResourceDetector()
+            - UlovDomov\Logging\OpenTelemetry\Resources\Detectors\NetteSessionResourceDetector()
 ```
 
 ## Log traces via OpenTelemetry
@@ -143,12 +205,11 @@ And configure it:
 
 ```neon
 logger:
-    # ... other values
     openTelemetry:
+        # ... other configuration
         traces:
-            name: 'name-of-my-app'            # name for tracer
-            url: 'https://example.com:4317'   # endpoint URL address with port
-            type: 'grpc'                      # can use more transport types (grpc, file, http, http-protobuf, null)
+            url: 'https://example.com:4317'   # endpoint URL address with port (this enable traces)
+            type: 'grpc'                      # can use more transport types (grpc, http, http-protobuf, file, null)
 ```
 
 ### GRPC (recommended)
@@ -186,7 +247,7 @@ logger:
     openTelemetry:
         traces:
             name: 'name-of-my-app'
-            url: %LOG_DIR%   # log directory (<url>/open-telemetry/transport.log)
+            url: %logDir%   # log directory (<url>/open-telemetry/transport.log)
             type: 'file'
 ```
 
@@ -210,7 +271,7 @@ logger:
 - This is only for development or test purposes
 - It will discard all logs
 
-## Usage
+### Usage
 
 ```php
 /** @var \UlovDomov\Logging\LoggerContextService $contextService */
@@ -242,7 +303,7 @@ for ($i = 0; $i < 3; $i++) {
 $tracer->end(); // must be called at the end of the script
 ```
 
-## Additional methods
+### Additional methods
 
 ```php
 /** @var \UlovDomov\Logging\OpenTelemetry\Traces\Tracer $tracer */
@@ -268,8 +329,126 @@ $current->getContext()->getSpanId();
 $current->getContext()->getTraceId();
 ```
 
+## Log metrics via OpenTelemetry
 
-### StdOut logging via Monolog
+**!! METRICS ARE EXPERIMENTAL FEATURE FOR NOW !!**
+
+Install the required packages:
+
+```shell
+composer require open-telemetry/sdk open-telemetry/exporter-otlp
+```
+
+And configure it:
+
+```neon
+logger:
+    openTelemetry:
+        # ... other configuration
+        metrics:
+            url: 'https://example.com:4317'   # endpoint URL address with port (this enables metrics)
+            type: 'grpc'                      # available types: grpc, http, http-protobuf, file, null
+            prefix: 'reds'                    # prefix for all metric names
+```
+
+### GRPC (recommended)
+
+`type: 'grpc'`
+
+1. For `open-telemetry/transport-grpc`, you need to have installed `grpc` and `protobuf` PHP extensions.
+2. Then you can install the package:
+
+```shell
+composer require open-telemetry/transport-grpc
+```
+
+### HTTP Protobuf
+
+`type: 'http-protobuf'`
+
+- Better than simple HTTP, because data are transported as binary instead of JSON.
+- Requires installed `protobuf` PHP extension.
+
+### HTTP
+
+`type: 'http'`
+
+- Basic option without binary encoding.
+- No additional PHP extension required.
+
+### File (dev only)
+
+`type: 'file'`
+
+```neon
+logger:
+    # ... other values
+    openTelemetry:
+        metrics:
+            url: %logDir%   # log directory (<url>/open-telemetry/transport.log)
+            type: 'file'
+```
+
+- This is only for development purposes
+- It will log to `<url>/open-telemetry/transport.log`
+
+### Null (dev or tests only)
+
+`type: 'null'`
+
+```neon
+logger:
+    # ... other values
+    openTelemetry:
+        metrics:
+            url: 'https://example.com:4317'
+            type: 'null'       # you can disable logging
+```
+
+### Usage
+
+```php
+/** @var \UlovDomov\Logging\LoggerContextService $contextService */
+$meter = $contextService->getMeter();
+// or get \UlovDomov\Logging\OpenTelemetry\Metrics\Meter from the DI container
+
+$meter->addGauge('active_users', 42, 'users', 'Currently active users');
+$meter->addCounter('emails_sent', 1, 'count', 'Number of sent emails');
+$meter->addUpDownCounter('queue_size', -1, 'jobs', 'Change in job queue size');
+$meter->addHistogram('db_response_time', 137.5, 'ms', 'DB response time in milliseconds');
+
+$meter->addObservableGauge('cache_usage', static function (\OpenTelemetry\API\Metrics\ObserverInterface $observer): void {
+    $observer->observe(75.2, ['region' => 'eu-central']);
+}, 'percent', 'Cache usage percent');
+
+$meter->addObservableCounter('errors_logged', static function (\OpenTelemetry\API\Metrics\ObserverInterface $observer): void {
+    $observer->observe(3, ['level' => 'critical']);
+}, 'count', 'Number of critical errors');
+
+$meter->addObservableUpDownCounter('threads_running', static function (\OpenTelemetry\API\Metrics\ObserverInterface $observer): void {
+    $observer->observe(8, ['type' => 'worker']);
+}, 'threads', 'Running thread count');
+```
+
+### Additional methods
+
+```php
+/** @var \UlovDomov\Logging\OpenTelemetry\Metrics\Meter $meter */
+
+// Check if meter is enabled
+$meter->isEnabled();
+
+// Manually collect current metrics (for snapshot or test usage)
+$meter->collect();
+
+// Properly shutdown meter and flush metrics
+$meter->end();
+```
+
+- This is only for development or test purposes
+- It will discard all logs
+
+## StdOut logging via Monolog
 
 - To log via stdout, you need to install the `monolog/monolog` package
 - The `LoggerExtension`, upon detecting Monolog classes, will register `UlovDomov\Logging\Monolog\MonologLoggerFactory` in the DI container
@@ -287,7 +466,7 @@ $logger->info('Response log', [/* response context and data */]);
 ```
 
 
-### API logger for ELK via Monolog
+## Logger for ELK via Monolog
 
 - To log into ELK, you need to install the `monolog/monolog` package
 - The `LoggerExtension`, upon detecting Monolog classes, will register `UlovDomov\Logging\Monolog\MonologLoggerFactory` in the DI container

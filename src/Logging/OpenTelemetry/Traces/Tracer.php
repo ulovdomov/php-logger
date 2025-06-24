@@ -8,26 +8,23 @@ use OpenTelemetry\Context\ScopeInterface;
 use OpenTelemetry\Contrib\Otlp\SpanExporter;
 use OpenTelemetry\SDK\Trace\SpanProcessor\SimpleSpanProcessor;
 use OpenTelemetry\SDK\Trace\TracerProvider;
-use UlovDomov\Logging\LoggerContextService;
 use UlovDomov\Logging\OpenTelemetry\OpenTelemetryClient;
+use UlovDomov\Logging\OpenTelemetry\Resources\ResourceDetector;
 
 final class Tracer
 {
-    private const ATTRIBUTE_CONTEXT = 'context';
-    private const ATTRIBUTE_TAGS = 'tags';
-    private const ATTRIBUTE_USER = 'user';
-
-    private TracerProvider $provider;
-    private TracerInterface $tracer;
+    private TracerProvider|null $provider = null;
+    private TracerInterface|null $tracer = null;
     private Span|null $root = null;
     private ScopeInterface|null $scope = null;
-    private LoggerContextService|null $contextService = null;
 
-    public function __construct(string $name, OpenTelemetryClient $openTelemetryClient)
+    public function __construct(
+        private readonly string $name,
+        private readonly OpenTelemetryClient $openTelemetryClient,
+        private readonly ResourceDetector $resourceDetector,
+    )
     {
-        $exporter = new SpanExporter($openTelemetryClient->getTransport());
-        $this->provider = new TracerProvider(new SimpleSpanProcessor($exporter)); // can use BatchSpanProcessor
-        $this->tracer = $this->provider->getTracer($name);
+
     }
 
     public function isEnabled(): bool
@@ -40,16 +37,8 @@ final class Tracer
      */
     public function enable(array $attributes = []): void
     {
-        if ($this->contextService !== null) {
-            $attributes = \array_merge($attributes, [
-                self::ATTRIBUTE_USER => $this->contextService->getUserData(),
-                self::ATTRIBUTE_TAGS => $this->contextService->getTags(),
-                self::ATTRIBUTE_CONTEXT => $this->contextService->getContext(),
-            ]);
-        }
-
         $name = 'root';
-        $this->root = new Span($this->tracer->spanBuilder($name)->setAttributes($attributes)->startSpan());
+        $this->root = new Span($this->getTracer()->spanBuilder($name)->setAttributes($attributes)->startSpan());
         $this->scope = $this->root->activate();
     }
 
@@ -63,7 +52,7 @@ final class Tracer
             throw new \LogicException('Tracer is not enabled. Call enable() first.');
         }
 
-        return new Span($this->tracer->spanBuilder($name)->setAttributes($attributes)->startSpan());
+        return new Span($this->getTracer()->spanBuilder($name)->setAttributes($attributes)->startSpan());
     }
 
     public function end(): void
@@ -71,10 +60,19 @@ final class Tracer
         $this->getRoot()->end();
         $this->getScope()->detach();
 
-        $this->provider->shutdown();
+        $this->getProvider()->shutdown();
 
         $this->root = null;
         $this->scope = null;
+    }
+
+    public function forceFlush(): void
+    {
+        if (!$this->isEnabled()) {
+            throw new \LogicException('Tracer is not enabled. Call enable() first.');
+        }
+
+        $this->getProvider()->forceFlush();
     }
 
     public function getCurrent(): Span
@@ -100,8 +98,25 @@ final class Tracer
         return $this->scope;
     }
 
-    public function setContextService(LoggerContextService $contextService): void
+    private function getProvider(): TracerProvider
     {
-        $this->contextService = $contextService;
+        if ($this->provider === null) {
+            $exporter = new SpanExporter($this->openTelemetryClient->getTraceTransport());
+            $this->provider = new TracerProvider(
+                new SimpleSpanProcessor($exporter), // can use BatchSpanProcessor
+                resource: $this->resourceDetector->getResource($this->name),
+            );
+        }
+
+        return $this->provider;
+    }
+
+    private function getTracer(): TracerInterface
+    {
+        if ($this->tracer === null) {
+            $this->tracer = $this->getProvider()->getTracer($this->name);
+        }
+
+        return $this->tracer;
     }
 }

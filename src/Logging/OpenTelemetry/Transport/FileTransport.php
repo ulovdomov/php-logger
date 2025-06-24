@@ -14,13 +14,13 @@ final class FileTransport implements TransportInterface
 {
     private string $path;
 
-    public function __construct(string|null $directory = null)
+    public function __construct(string $fileName, string|null $directory = null)
     {
         $directory = $directory . \DIRECTORY_SEPARATOR . 'open-telemetry';
 
         @\mkdir($directory);
 
-        $this->path = \rtrim($directory, '/\\') . \DIRECTORY_SEPARATOR . 'transport.log';
+        $this->path = \rtrim($directory, '/\\') . \DIRECTORY_SEPARATOR . $fileName . '.log';
     }
 
     public function contentType(): string

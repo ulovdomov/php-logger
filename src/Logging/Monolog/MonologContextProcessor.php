@@ -24,8 +24,10 @@ final class MonologContextProcessor implements ProcessorInterface
             $record->extra['user'] = $userData;
         }
 
-        if ($this->loggerContextService->environment !== null) {
-            $record->extra['environment'] = $this->loggerContextService->environment;
+        $environment = $this->loggerContextService->getEnvironment();
+
+        if ($environment !== null) {
+            $record->extra['environment'] = $environment;
         }
 
         $tags = $this->loggerContextService->getTags();
