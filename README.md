@@ -331,6 +331,8 @@ $current->getContext()->getTraceId();
 
 ## Log metrics via OpenTelemetry
 
+**!! METRICS ARE EXPERIMENTAL FEATURE FOR NOW !!**
+
 Install the required packages:
 
 ```shell
