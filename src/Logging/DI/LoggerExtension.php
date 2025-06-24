@@ -16,6 +16,7 @@ use UlovDomov\Logging\Monolog\MonologContextProcessor;
 use UlovDomov\Logging\Monolog\MonologLoggerFactory;
 use UlovDomov\Logging\OpenTelemetry\Metrics\Meter;
 use UlovDomov\Logging\OpenTelemetry\Metrics\Store\JsonFileMetricStore;
+use UlovDomov\Logging\OpenTelemetry\Metrics\Store\MetricValueStore;
 use UlovDomov\Logging\OpenTelemetry\OpenTelemetryClient;
 use UlovDomov\Logging\OpenTelemetry\Resources\Detectors\ContextResourceDetector;
 use UlovDomov\Logging\OpenTelemetry\Resources\ResourceDetector;
@@ -62,7 +63,7 @@ final class LoggerExtension extends CompilerExtension
                     ),
                     'store' => Expect::anyOf(
                         'json',
-                        Expect::type(JsonFileMetricStore::class),
+                        Expect::type(MetricValueStore::class),
                     )->dynamic()->nullable(),
                 ])->castTo('array'),
             ])->castTo('array'),
