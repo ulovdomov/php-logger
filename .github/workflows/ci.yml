@@ -54,7 +54,7 @@ jobs:
         run: mkdir -p src temp log
 
       - name: "Composer"
-        uses: "ulovdomov/github-actions/.github/actions/php-composer@v3.0.0"
+        uses: "ulovdomov/github-actions/.github/actions/php-composer@v4.0.0"
 
       - name: Run code sniffer
         run: composer run cs
