@@ -54,6 +54,7 @@ docker:
 	docker compose exec -it php /bin/bash
 
 rebuild:
+	@make dependencies
 	docker compose up -d --build
 	@make info
 
