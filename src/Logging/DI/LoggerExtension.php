@@ -36,7 +36,7 @@ final class LoggerExtension extends CompilerExtension
                 'name' => Expect::string()->dynamic()->default('unknown-ud-app'),
                 'version' => Expect::string()->dynamic()->default('0.0.0'),
                 'namespace' => Expect::string()->dynamic()->default('ud-php-app'),
-                'resourceDetectors' => Expect::listOf(Expect::type(ResourceDetectorInterface::class))->default([]),
+                'resourceDetectors' => Expect::array()->default([]),
                 'traces' => Expect::structure([
                     'url' => Expect::string()->dynamic()->nullable(),
                     'type' => Expect::anyOf(

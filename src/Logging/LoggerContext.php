@@ -47,15 +47,7 @@ final class LoggerContext
 
             $ipList = \explode(',', $ip);
             foreach ($ipList as $candidate) {
-                $candidate = \trim($candidate);
-
-                if (\filter_var(
-                    $candidate,
-                    \FILTER_VALIDATE_IP,
-                    \FILTER_FLAG_NO_PRIV_RANGE | \FILTER_FLAG_NO_RES_RANGE,
-                ) !== false) {
-                    return $candidate;
-                }
+                return \trim($candidate);
             }
         }
 
