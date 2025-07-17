@@ -27,7 +27,6 @@
     "nette/application": "^3.2",
     "nette/security": "^3.2",
     "psr/http-server-middleware": "^1.0",
-    "ulovdomov/slim": "^1.0",
     "contributte/console": "^0.10.1",
     "contributte/event-dispatcher": "^0.9.1"
   },
