@@ -55,6 +55,8 @@ jobs:
 
       - name: "Composer"
         uses: "ulovdomov/github-actions/.github/actions/php-composer@v4.0.0"
+        with:
+          composer-token: ${{secrets.UD_COMPOSER_TOKEN}}
 
       - name: Run code sniffer
         run: composer run cs

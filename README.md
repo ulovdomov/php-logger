@@ -82,7 +82,7 @@ public function addContext(string|int $key, mixed $value): void
 
 - Used for grouping exceptions that need to be monitored in the application
 - Implements the method `getFingerprint(): string|null`, which returns, for example, a hash
-- The value from `getFingerprint()` is utilized:
+- The value from `getFingerprint()` is used:
   - By `Sentry` to group issues accordingly
   - Logged into `Tracy` `.log` files, allowing logs to be grouped via commands.
   - The `Monolog` logger does not log this information.
@@ -159,23 +159,6 @@ And configure it:
         namespace: 'ud-php-app'               # namespace of app (default: ud-php-app)
         resourceDetectors:                    # custom resource detectors for open-telemetry
             - @MyCustomResourceDetector
-```
-
-### Resource detectors for Slim FW
-
-‼️You also need to configure `SlimHttpResourceDetector` service as middleware in Slim APP. ‼️
-
-Configure the following resource detectors:
-
-```neon
-services:
-    slimResourceDetector: UlovDomov\Logging\OpenTelemetry\Resources\Detectors\SlimHttpResourceDetector
-
-logger:
-    openTelemetry:
-        # ... other configuration
-        resourceDetectors:
-            - @slimResourceDetector
 ```
 
 ### Resource detectors for Nette FW
@@ -328,6 +311,30 @@ $current = \UlovDomov\Logging\OpenTelemetry\Traces\Span::getCurrent();
 $current->getContext()->getSpanId();
 $current->getContext()->getTraceId();
 ```
+
+## Console command Logging with `contributte/console` package
+
+You need to install both `contributte/console` and `contributte/events` packages, and register the events extension.
+And also register `UlovDomov\Logging\Console\TracesConsoleLogger` as a service to DI container
+
+```neon
+extension:
+    events: Contributte\EventDispatcher\DI\EventDispatcherExtension
+    
+services:
+    - UlovDomov\Logging\Console\TracesConsoleLogger
+```
+
+## HTTP Request and Response Logging in Slim Framework
+
+To log HTTP requests and responses in the Slim framework, you can register the `TracesSlimLogger` class in your DI container:
+
+```neon
+services:
+    slimLogger: UlovDomov\Logging\Slim\TracesSlimLogger
+```
+
+‼️ For `TracesSlimLogger` to work properly, you need to have Tempo (OpenTelemetry Traces) configured. Without proper Tempo configuration, DI throws exception for not existing Tracer. ‼️
 
 ## Log metrics via OpenTelemetry
 

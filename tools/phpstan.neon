@@ -13,6 +13,7 @@ parameters:
 #    doctrine:
 #        objectManagerLoader: ../.infrastructure/PHPStan/object-manager.php
     excludePaths:
+        - ../src/Logging/Slim/TracesSlimLogger.php
         - ../src/Logging/OpenTelemetry/Metrics/* # todo: remove this line after fix Meter
     exceptions:
         check:
