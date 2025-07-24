@@ -24,12 +24,12 @@ final class ResourceDetector
     {
     }
 
-    public function getResource(string $name): ResourceInfo
+    public function getResource(string $name, string|null $instance): ResourceInfo
     {
         if ($this->resource === null) {
             $resource = ResourceInfoFactory::emptyResource();
             $resource = $resource->merge(ResourceInfoFactory::defaultResource());
-            $resource = $resource->merge($this->createDefaultResource($name));
+            $resource = $resource->merge($this->createDefaultResource($name, $instance));
 
             foreach ($this->resourceDetectors as $detector) {
                 $resource = $resource->merge($detector->getResource());
@@ -41,13 +41,19 @@ final class ResourceDetector
         return $this->resource;
     }
 
-    private function createDefaultResource(string $name): ResourceInfo
+    private function createDefaultResource(string $name, string|null $instance): ResourceInfo
     {
-        return ResourceInfo::create(Attributes::create([
+        $attributes = [
             ResourceAttributes::SERVICE_NAMESPACE => $this->namespace,
             ResourceAttributes::SERVICE_NAME => $name,
             ResourceAttributes::SERVICE_VERSION => $this->version,
             ResourceAttributes::DEPLOYMENT_ENVIRONMENT_NAME => $this->environment,
-        ]));
+        ];
+
+        if ($instance !== null) {
+            $attributes[ResourceAttributes::SERVICE_INSTANCE_ID] = $instance;
+        }
+
+        return ResourceInfo::create(Attributes::create($attributes));
     }
 }

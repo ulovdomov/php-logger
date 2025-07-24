@@ -20,6 +20,7 @@ final class Tracer
 
     public function __construct(
         private readonly string $name,
+        private readonly string|null $instance,
         private readonly OpenTelemetryClient $openTelemetryClient,
         private readonly ResourceDetector $resourceDetector,
     )
@@ -104,7 +105,7 @@ final class Tracer
             $exporter = new SpanExporter($this->openTelemetryClient->getTraceTransport());
             $this->provider = new TracerProvider(
                 new SimpleSpanProcessor($exporter), // can use BatchSpanProcessor
-                resource: $this->resourceDetector->getResource($this->name),
+                resource: $this->resourceDetector->getResource($this->name, $this->instance),
             );
         }
 

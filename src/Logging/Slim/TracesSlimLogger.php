@@ -16,6 +16,11 @@ final class TracesSlimLogger implements SlimLogger
 {
     private Span|null $requestSpan = null;
 
+    /**
+     * @var array<string>
+     */
+    private array $requestData = [];
+
     public function __construct(private readonly Tracer $tracer)
     {
     }
@@ -26,15 +31,18 @@ final class TracesSlimLogger implements SlimLogger
             $this->tracer->enable();
         }
 
-        $query = $request->getUri()->getQuery();
-
-        $span = $this->tracer->startSpan('Slim.request', [
+        $this->requestData = [
             'endpoint' => $request->getUri()->withQuery('')->__toString(),
             'http_method' => $request->getMethod(),
-            'http_query' => $query,
-            'headers' => Utils::anonymizeHeaders($request->getHeaders()),
-            'body' => $this->getBodyContent($request->getBody()),
-        ]);
+        ];
+
+        $query = $request->getUri()->getQuery();
+
+        $span = $this->tracer->startSpan('Slim.request', $this->requestData + [
+                'http_query' => $query,
+                'headers' => Utils::anonymizeHeaders($request->getHeaders()),
+                'body' => $this->getBodyContent($request->getBody()),
+            ]);
         $this->requestSpan = $span;
     }
 
@@ -44,11 +52,11 @@ final class TracesSlimLogger implements SlimLogger
             throw LogicException::create('Method catchRequest must be called first.');
         }
 
-        $this->tracer->startSpan('Slim.response', [
-            'http_status' => $response->getStatusCode(),
-            'headers' => Utils::anonymizeHeaders($response->getHeaders()),
-            'body' => $this->getBodyContent($response->getBody()),
-        ])->end();
+        $this->tracer->startSpan('Slim.response', $this->requestData + [
+                'http_status' => $response->getStatusCode(),
+                'headers' => Utils::anonymizeHeaders($response->getHeaders()),
+                'body' => $this->getBodyContent($response->getBody()),
+            ])->end();
 
         $this->requestSpan->end();
 

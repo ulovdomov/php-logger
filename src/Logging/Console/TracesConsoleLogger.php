@@ -3,6 +3,7 @@
 namespace UlovDomov\Logging\Console;
 
 use OpenTelemetry\API\Trace\StatusCode;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\ConsoleEvents;
 use Symfony\Component\Console\Event\ConsoleCommandEvent;
 use Symfony\Component\Console\Event\ConsoleErrorEvent;
@@ -20,7 +21,7 @@ final class TracesConsoleLogger implements EventSubscriberInterface
 
     }
 
-    public function start(): void
+    public function start(Command|null $command = null): void
     {
         if (!$this->tracer->isEnabled()) {
             $this->tracer->enable();
@@ -29,7 +30,7 @@ final class TracesConsoleLogger implements EventSubscriberInterface
         $rawArgs = \array_slice($_SERVER['argv'], 2);
 
         $this->span = $this->tracer->startSpan('Console.command', [
-            'console_command' => $_SERVER['argv'][1] ?? '<no-command>',
+            'console_command' => $command?->getName() ?? $_SERVER['argv'][1] ?? '<no-command>',
             'console_arguments' => \implode(' ', $rawArgs),
         ]);
     }
@@ -71,7 +72,7 @@ final class TracesConsoleLogger implements EventSubscriberInterface
 
     public function onCommand(ConsoleCommandEvent $event): void
     {
-        $this->start();
+        $this->start($event->getCommand());
     }
 
     public function onTerminate(ConsoleTerminateEvent $event): void
