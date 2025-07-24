@@ -34,6 +34,7 @@ final class LoggerExtension extends CompilerExtension
             'tags' => Expect::arrayOf(Expect::string()->dynamic(), Expect::string()),
             'openTelemetry' => Expect::structure([
                 'name' => Expect::string()->dynamic()->default('unknown-ud-app'),
+                'instance' => Expect::string()->dynamic()->nullable(),
                 'version' => Expect::string()->dynamic()->default('0.0.0'),
                 'namespace' => Expect::string()->dynamic()->default('ud-php-app'),
                 'resourceDetectors' => Expect::array()->default([]),
@@ -72,7 +73,6 @@ final class LoggerExtension extends CompilerExtension
 
     public function loadConfiguration(): void
     {
-        $container = $this->getContainerBuilder();
         /**
          * @var array{
          *          environment: string,
@@ -80,6 +80,7 @@ final class LoggerExtension extends CompilerExtension
          *          tags: array<string, string>,
          *          openTelemetry: array{
          *              name:string,
+         *              instance:string|null,
          *              version:string,
          *              namespace:string,
          *              resourceDetectors:array<ResourceDetectorInterface>,
@@ -89,6 +90,7 @@ final class LoggerExtension extends CompilerExtension
          *     } $config
          */
         $config = $this->config;
+        $container = $this->getContainerBuilder();
 
         $environment = $config['environment'];
         $this->loadOpenTelemetry($environment, $config['openTelemetry']);
@@ -130,6 +132,7 @@ final class LoggerExtension extends CompilerExtension
     /**
      * @param array{
      *          name:string,
+     *          instance:string|null,
      *          version:string,
      *          namespace:string,
      *          resourceDetectors:array<ResourceDetectorInterface>,
@@ -172,6 +175,7 @@ final class LoggerExtension extends CompilerExtension
             $container->addDefinition($this->prefix('tracer'))
                 ->setFactory(Tracer::class, [
                     'name' => $config['name'],
+                    'instance' => $config['instance'],
                     'openTelemetryClient' => $this->prefix('@openTelemetryClient'),
                     'resourceDetector' => $this->prefix('@resourceDetector'),
                 ]);
@@ -192,6 +196,7 @@ final class LoggerExtension extends CompilerExtension
             $container->addDefinition($this->prefix('meter'))
                 ->setFactory(Meter::class, [
                     'name' => $config['name'],
+                    'instance' => $config['instance'],
                     'prefix' => $config['metrics']['prefix'],
                     'openTelemetryClient' => $this->prefix('@openTelemetryClient'),
                     'resourceDetector' => $this->prefix('@resourceDetector'),

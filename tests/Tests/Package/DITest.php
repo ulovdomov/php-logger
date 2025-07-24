@@ -37,7 +37,7 @@ final class DITest extends BaseDITestCase
         /** @var ResourceDetector $detector */
         $detector = $this->getContainer()->getService('testLogger.resourceDetector');
 
-        $resource = $detector->getResource('test-app');
+        $resource = $detector->getResource('test-app', 'test-instance');
         $attributes = $resource->getAttributes();
 
         self::assertSame('test-app', $attributes->get('service.name'));
@@ -45,6 +45,7 @@ final class DITest extends BaseDITestCase
         self::assertSame('1.0.0@beta', $attributes->get('service.version'));
         self::assertSame('test', $attributes->get('deployment.environment.name'));
         self::assertSame('logger-tests', $attributes->get('tags.app'));
+        self::assertSame('test-instance', $attributes->get('service.instance.id'));
         self::assertIsNumeric($attributes->get('process.pid'));
     }
 
@@ -60,12 +61,13 @@ final class DITest extends BaseDITestCase
         /** @var ResourceDetector $detector */
         $detector = $this->getContainer()->getService('testLogger.resourceDetector');
 
-        $resource = $detector->getResource('test-app');
+        $resource = $detector->getResource('test-app', 'test-instance-one');
         $attributes = $resource->getAttributes();
 
         self::assertSame('test@example.com', $attributes->get('user.email'));
         self::assertSame('1b44ddb4-9040-456b-a6b6-359c3832300d', $attributes->get('user.id'));
         self::assertSame('john', $attributes->get('user.username'));
+        self::assertSame('test-instance-one', $attributes->get('service.instance.id'));
     }
 
     protected function createConfigurator(): Configurator

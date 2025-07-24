@@ -23,6 +23,7 @@
                     <field name="openTelemetry" documentation="Default tags for application">
                         <structure>
                             <field name="name" default="unknown-ud-app"><string /></field>
+                            <field name="name" default="null"><string /><null /></field>
                             <field name="version" default="0.0.0"><string /></field>
                             <field name="namespace" default="ud-php-app"><string /></field>
                             <field name="resourceDetectors">

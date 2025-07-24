@@ -31,6 +31,7 @@ final class Meter
 
     public function __construct(
         private readonly string $name,
+        private readonly string|null $instance,
         private readonly string $prefix,
         private readonly OpenTelemetryClient $openTelemetryClient,
         private readonly ResourceDetector $resourceDetector,
@@ -297,7 +298,7 @@ final class Meter
     private function getMetterProvider(): MeterProviderInterface
     {
         return $this->metterProvider ??= MeterProvider::builder()
-            ->setResource($this->resourceDetector->getResource($this->name))
+            ->setResource($this->resourceDetector->getResource($this->name, $this->instance))
             ->addReader($this->getReader())
             ->build();
     }
