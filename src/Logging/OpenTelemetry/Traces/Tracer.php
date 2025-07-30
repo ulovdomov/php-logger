@@ -58,8 +58,8 @@ final class Tracer
 
     public function end(): void
     {
-        $this->getRoot()->end();
         $this->getScope()->detach();
+        $this->getRoot()->end();
 
         $this->getProvider()->shutdown();
 
