@@ -44,7 +44,7 @@ final class TracesConsoleLogger implements EventSubscriberInterface
     public function end(): void
     {
         $this->getSpan()->end();
-        $this->getSpan()->end();
+        $this->tracer->end();
     }
 
     public function setExitCode(int $exitCode): void
