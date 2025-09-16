@@ -12,9 +12,11 @@ use UlovDomov\Logging\OpenTelemetry\Traces\Tracer;
 use UlovDomov\Logging\OpenTelemetry\Utils;
 use UlovDomov\Slim\Logging\SlimLogger;
 
-final class TracesSlimLogger implements SlimLogger
+class TracesSlimLogger implements SlimLogger
 {
     private Span|null $requestSpan = null;
+
+    private ServerRequestInterface|null $lastRequest = null;
 
     /**
      * @var array<string>
@@ -25,8 +27,15 @@ final class TracesSlimLogger implements SlimLogger
     {
     }
 
+    protected function getCurrentRequest(): ServerRequestInterface|null
+    {
+        return $this->lastRequest;
+    }
+
     public function catchRequest(ServerRequestInterface $request): void
     {
+        $this->lastRequest = $request;
+
         if (!$this->tracer->isEnabled()) {
             $this->tracer->enable();
         }
@@ -38,10 +47,15 @@ final class TracesSlimLogger implements SlimLogger
 
         $query = $request->getUri()->getQuery();
 
+        $bodyStream = $request->getBody();
+        $body = $this->shouldReturnOnlySize($bodyStream) ? $this->getBodySize($bodyStream) : $this->getBodyContent(
+            $bodyStream,
+        );
+
         $span = $this->tracer->startSpan('Slim.request', $this->requestData + [
                 'http_query' => $query,
                 'headers' => Utils::anonymizeHeaders($request->getHeaders()),
-                'body' => $this->getBodyContent($request->getBody()),
+                'body' => $body,
             ]);
         $this->requestSpan = $span;
     }
@@ -52,10 +66,15 @@ final class TracesSlimLogger implements SlimLogger
             throw LogicException::create('Method catchRequest must be called first.');
         }
 
+        $bodyStream = $response->getBody();
+        $body = $this->shouldReturnOnlySize($bodyStream) ? $this->getBodySize($bodyStream) : $this->getBodyContent(
+            $bodyStream,
+        );
+
         $this->tracer->startSpan('Slim.response', $this->requestData + [
                 'http_status' => $response->getStatusCode(),
                 'headers' => Utils::anonymizeHeaders($response->getHeaders()),
-                'body' => $this->getBodyContent($response->getBody()),
+                'body' => $body,
             ])->end();
 
         $this->requestSpan->end();
@@ -77,7 +96,73 @@ final class TracesSlimLogger implements SlimLogger
         $this->requestSpan->setStatus(StatusCode::STATUS_ERROR);
     }
 
-    private function getBodyContent(StreamInterface $stream): string|null
+    protected function shouldReturnOnlySize(StreamInterface $stream): bool
+    {
+        try {
+            if ($stream->isSeekable()) {
+                $stream->rewind();
+            }
+
+            $preview = $stream->read(4096);
+
+            // Reset pointer for subsequent operations
+            if ($stream->isSeekable()) {
+                $stream->rewind();
+            }
+
+            if ($preview === '') {
+                return false; // empty body -> treat as text (we will return null later)
+            }
+
+            return !\mb_check_encoding($preview, 'UTF-8');
+        } catch (\Throwable) {
+            // In case of any error determining, be safe and do not treat as binary
+            return false;
+        }
+    }
+
+    /**
+     * Return the size of the body in bytes, if determinable.
+     */
+    protected function getBodySize(StreamInterface $stream): int|null
+    {
+        try {
+            // Try native size first
+            $size = $stream->getSize();
+
+            if ($size !== null) {
+                return $size;
+            }
+
+            // Fall back to counting bytes by reading
+            $total = 0;
+
+            if ($stream->isSeekable()) {
+                $stream->rewind();
+            }
+
+            while (!$stream->eof()) {
+                $chunk = $stream->read(8192);
+
+                if ($chunk === '') {
+                    break;
+                }
+
+                $total += \mb_strlen($chunk, '8bit');
+            }
+
+            // Reset pointer for other consumers
+            if ($stream->isSeekable()) {
+                $stream->rewind();
+            }
+
+            return $total;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    protected function getBodyContent(StreamInterface $stream): string|null
     {
         try {
             if ($stream->isSeekable()) {
