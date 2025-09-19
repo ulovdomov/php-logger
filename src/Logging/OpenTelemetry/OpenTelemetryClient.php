@@ -31,9 +31,14 @@ final class OpenTelemetryClient
         TransportType $metricsType,
     )
     {
-        $this->traceTransport = $url !== null ? $this->createTransport($url, $type, Signals::TRACE, 'traces') : null;
+        $this->traceTransport = $url !== null && \strlen(\trim($url)) > 0 ? $this->createTransport(
+            $url,
+            $type,
+            Signals::TRACE,
+            'traces',
+        ) : null;
 
-        $this->metricsTransport = $metricsUrl !== null ? $this->createTransport(
+        $this->metricsTransport = $metricsUrl !== null && \strlen(\trim($metricsUrl)) > 0 ? $this->createTransport(
             $metricsUrl,
             $metricsType,
             Signals::METRICS,

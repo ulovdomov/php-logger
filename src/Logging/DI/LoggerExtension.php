@@ -144,10 +144,7 @@ final class LoggerExtension extends CompilerExtension
     {
         $container = $this->getContainerBuilder();
 
-        if (
-            ($config['traces']['url'] !== null && \strlen(\trim($config['traces']['url'])) > 0)
-            || ($config['metrics']['url'] !== null && \strlen(\trim($config['metrics']['url'])) > 0)
-        ) {
+        if ($config['traces']['url'] !== null || $config['metrics']['url'] !== null) {
             $container->addDefinition($this->prefix('contextResourceDetector'))
                 ->setAutowired(false)
                 ->setFactory(ContextResourceDetector::class);
@@ -174,7 +171,7 @@ final class LoggerExtension extends CompilerExtension
                 ]);
         }
 
-        if ($config['traces']['url'] !== null && \strlen(\trim($config['traces']['url'])) > 0) {
+        if ($config['traces']['url'] !== null) {
             $container->addDefinition($this->prefix('tracer'))
                 ->setFactory(Tracer::class, [
                     'name' => $config['name'],
@@ -184,7 +181,7 @@ final class LoggerExtension extends CompilerExtension
                 ]);
         }
 
-        if ($config['metrics']['url'] !== null && \strlen(\trim($config['metrics']['url'])) > 0) {
+        if ($config['metrics']['url'] !== null) {
             $store = $config['metrics']['store'];
 
             if ($store !== null) {
