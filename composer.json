@@ -10,7 +10,7 @@
   },
   "require-dev": {
     "ext-grpc": "*",
-    "ulovdomov/php-code-style": "v25.03.27.1",
+    "ulovdomov/php-code-style": "v25.03.27.2",
     "phpunit/phpunit": "^10.5",
     "phpstan/phpstan": "^1.12",
     "phpstan/phpstan-strict-rules": "^1.6",
@@ -28,6 +28,7 @@
     "nette/security": "^3.2",
     "psr/http-server-middleware": "^1.0",
     "contributte/console": "^0.10.1",
+    "slevomat/coding-standard": "8.22.*",
     "contributte/event-dispatcher": "^0.9.1"
   },
   "suggest": {
