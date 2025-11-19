@@ -3,9 +3,13 @@
 namespace UlovDomov\Logging\OpenTelemetry\Resources;
 
 use OpenTelemetry\SDK\Common\Attribute\Attributes;
+use OpenTelemetry\SDK\Resource\Detectors\Composite;
+use OpenTelemetry\SDK\Resource\Detectors\Environment;
+use OpenTelemetry\SDK\Resource\Detectors\Host;
+use OpenTelemetry\SDK\Resource\Detectors\Sdk;
+use OpenTelemetry\SDK\Resource\Detectors\Service;
 use OpenTelemetry\SDK\Resource\ResourceDetectorInterface;
 use OpenTelemetry\SDK\Resource\ResourceInfo;
-use OpenTelemetry\SDK\Resource\ResourceInfoFactory;
 use OpenTelemetry\SemConv\ResourceAttributes;
 
 final class ResourceDetector
@@ -27,9 +31,7 @@ final class ResourceDetector
     public function getResource(string $name, string|null $instance): ResourceInfo
     {
         if ($this->resource === null) {
-            $resource = ResourceInfoFactory::emptyResource();
-            $resource = $resource->merge(ResourceInfoFactory::defaultResource());
-            $resource = $resource->merge($this->createDefaultResource($name, $instance));
+            $resource = self::getDefaultDetectors()->merge($this->createDefaultResource($name, $instance));
 
             foreach ($this->resourceDetectors as $detector) {
                 $resource = $resource->merge($detector->getResource());
@@ -48,6 +50,12 @@ final class ResourceDetector
             ResourceAttributes::SERVICE_NAME => $name,
             ResourceAttributes::SERVICE_VERSION => $this->version,
             ResourceAttributes::DEPLOYMENT_ENVIRONMENT_NAME => $this->environment,
+            ResourceAttributes::PROCESS_RUNTIME_NAME => \php_sapi_name(),
+            ResourceAttributes::PROCESS_RUNTIME_VERSION => \PHP_VERSION,
+            ResourceAttributes::PROCESS_PID => \getmypid(),
+            ResourceAttributes::PROCESS_EXECUTABLE_PATH => \PHP_BINARY,
+            ResourceAttributes::PROCESS_COMMAND => $_SERVER['argv'][0],
+            ResourceAttributes::PROCESS_COMMAND_ARGS => $_SERVER['argv'],
         ];
 
         if ($instance !== null) {
@@ -55,5 +63,15 @@ final class ResourceDetector
         }
 
         return ResourceInfo::create(Attributes::create($attributes));
+    }
+
+    private static function getDefaultDetectors(): ResourceInfo
+    {
+        return (new Composite([
+            new Host(),
+            new Environment(),
+            new Sdk(),
+            new Service(),
+        ]))->getResource();
     }
 }
