@@ -54,9 +54,12 @@ final class ResourceDetector
             ResourceAttributes::PROCESS_RUNTIME_VERSION => \PHP_VERSION,
             ResourceAttributes::PROCESS_PID => \getmypid(),
             ResourceAttributes::PROCESS_EXECUTABLE_PATH => \PHP_BINARY,
-            ResourceAttributes::PROCESS_COMMAND => $_SERVER['argv'][0],
-            ResourceAttributes::PROCESS_COMMAND_ARGS => $_SERVER['argv'],
         ];
+
+        if (isset($_SERVER['argv'])) {
+            $attributes[ResourceAttributes::PROCESS_COMMAND] = $_SERVER['argv'][0] ?? 'unknown';
+            $attributes[ResourceAttributes::PROCESS_COMMAND_ARGS] = $_SERVER['argv'];
+        }
 
         if ($instance !== null) {
             $attributes[ResourceAttributes::SERVICE_INSTANCE_ID] = $instance;
