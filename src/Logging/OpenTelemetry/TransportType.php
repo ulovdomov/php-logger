@@ -9,4 +9,12 @@ enum TransportType: string
     case Http = 'http';
     case HttpProtobuf = 'http-protobuf';
     case Null = 'null';
+
+    public function getProtocol(): string
+    {
+        if ($this === self::Grpc) {
+            return 'grpc';
+        }
+        return 'http';
+    }
 }

@@ -56,7 +56,7 @@ final class OpenTelemetryClient
         string $fileName,
     ): TransportInterface
     {
-        $endpoint = \rtrim($url, '/') . OtlpUtil::method($signal);
+        $endpoint = \rtrim($url, '/') . OtlpUtil::path($signal, $type->getProtocol());
 
         return match ($type) {
             TransportType::File => new FileTransport($fileName, $url),
