@@ -15,6 +15,7 @@ enum TransportType: string
         if ($this === self::Grpc) {
             return 'grpc';
         }
+
         return 'http';
     }
 }
