@@ -28,3 +28,5 @@ parameters:
         - '#Parameter \#2 \$attributes \(iterable<non-empty-string, array\|bool\|float\|int\|string\|null>\) of method .+ should be contravariant with parameter \$attributes \(iterable\) of method .+#'
         - '#Method UlovDomov\\Logging\\OpenTelemetry\\Resources\\Detectors\\.+::getResource\(\) throws checked exception Nette\\DI\\MissingServiceException but it.{1}s missing from the PHPDoc @throws tag\.#'
         - '#Parameter \#1 \$value of function strval expects bool\|float\|int\|resource\|string\|null, mixed given\.#'
+        - '#Parameter \#1 \$signal of static method OpenTelemetry\\Contrib\\Otlp\\OtlpUtil::path\(\) expects .+, string given\.#'
+        - '#Parameter \#2 \$protocol of static method OpenTelemetry\\Contrib\\Otlp\\OtlpUtil::path\(\) expects .+, string given\.#'
