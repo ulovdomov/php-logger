@@ -5,7 +5,6 @@ namespace UlovDomov\Logging\OpenTelemetry\Resources\Detectors;
 use OpenTelemetry\SDK\Common\Attribute\Attributes;
 use OpenTelemetry\SDK\Resource\ResourceDetectorInterface;
 use OpenTelemetry\SDK\Resource\ResourceInfo;
-use OpenTelemetry\SemConv\ResourceAttributes;
 use UlovDomov\Logging\LoggerContext;
 
 final class ContextResourceDetector implements ResourceDetectorInterface
@@ -52,6 +51,6 @@ final class ContextResourceDetector implements ResourceDetectorInterface
             $attributes['user.ip_address'] = $ipAddress;
         }
 
-        return ResourceInfo::create(Attributes::create($attributes), ResourceAttributes::SCHEMA_URL);
+        return ResourceInfo::create(Attributes::create($attributes));
     }
 }
