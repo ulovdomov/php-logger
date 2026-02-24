@@ -11,4 +11,7 @@ USER www-data
 
 COPY --chown=www-data:www-data . .
 
+RUN cd /var/www/html && curl -fsSL https://claude.ai/install.sh | bash
+RUN echo 'export PATH="$HOME/.local/bin:$PATH"' >> $HOME/.bashrc
+
 ENTRYPOINT ["/bin/sh", "/var/www/html/.infrastructure/docker/php/entrypoint-staging.sh"]

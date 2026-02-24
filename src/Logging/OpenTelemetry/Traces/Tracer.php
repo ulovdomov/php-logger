@@ -2,11 +2,12 @@
 
 namespace UlovDomov\Logging\OpenTelemetry\Traces;
 
+use OpenTelemetry\API\Common\Time\Clock;
 use OpenTelemetry\API\Trace\Span as OpenTelemetrySpan;
 use OpenTelemetry\API\Trace\TracerInterface;
 use OpenTelemetry\Context\ScopeInterface;
 use OpenTelemetry\Contrib\Otlp\SpanExporter;
-use OpenTelemetry\SDK\Trace\SpanProcessor\SimpleSpanProcessor;
+use OpenTelemetry\SDK\Trace\SpanProcessor\BatchSpanProcessor;
 use OpenTelemetry\SDK\Trace\TracerProvider;
 use UlovDomov\Logging\OpenTelemetry\OpenTelemetryClient;
 use UlovDomov\Logging\OpenTelemetry\Resources\ResourceDetector;
@@ -58,13 +59,17 @@ final class Tracer
 
     public function end(): void
     {
-        $this->getScope()->detach();
-        $this->getRoot()->end();
+        try {
+            $this->getScope()->detach();
+            $this->getRoot()->end();
 
-        $this->getProvider()->shutdown();
-
-        $this->root = null;
-        $this->scope = null;
+            $this->getProvider()->shutdown();
+        } catch (\Throwable $e) {
+            \trigger_error('OpenTelemetry: ' . $e->getMessage(), \E_USER_WARNING);
+        } finally {
+            $this->root = null;
+            $this->scope = null;
+        }
     }
 
     public function forceFlush(): void
@@ -104,7 +109,7 @@ final class Tracer
         if ($this->provider === null) {
             $exporter = new SpanExporter($this->openTelemetryClient->getTraceTransport());
             $this->provider = new TracerProvider(
-                new SimpleSpanProcessor($exporter), // can use BatchSpanProcessor
+                new BatchSpanProcessor($exporter, Clock::getDefault()),
                 resource: $this->resourceDetector->getResource($this->name, $this->instance),
             );
         }
