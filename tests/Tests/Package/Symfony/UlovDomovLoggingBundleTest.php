@@ -62,4 +62,17 @@ final class UlovDomovLoggingBundleTest extends TestCase
         self::assertSame('staging', $context->getArgument('$environment'));
         self::assertSame(['app' => 'demo'], $context->getArgument('$tags'));
     }
+
+    /**
+     * @throws OutOfBoundsException
+     */
+    public function testDefaultsAppliedWithEmptyConfig(): void
+    {
+        $builder = $this->buildContainer([]);
+
+        $context = $builder->getDefinition(LoggerContext::class);
+
+        self::assertSame([], $context->getArgument('$tags'));
+        self::assertNull($context->getArgument('$environment'));
+    }
 }
