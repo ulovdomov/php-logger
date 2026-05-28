@@ -10,7 +10,7 @@
   },
   "require-dev": {
     "ext-grpc": "*",
-    "ulovdomov/php-code-style": "v25.03.27.2",
+    "ulovdomov/php-code-style": "v25.9.29.1",
     "phpunit/phpunit": "^10.5",
     "phpstan/phpstan": "^1.12",
     "phpstan/phpstan-strict-rules": "^1.6",
@@ -28,8 +28,17 @@
     "nette/security": "^3.2",
     "psr/http-server-middleware": "^1.0",
     "contributte/console": "^0.10.1",
-    "slevomat/coding-standard": "8.22.*",
-    "contributte/event-dispatcher": "^0.9.1"
+    "slevomat/coding-standard": "^8.24",
+    "contributte/event-dispatcher": "^0.9.1",
+    "symfony/framework-bundle": "^6.4 || ^7.0",
+    "symfony/http-kernel": "^6.4 || ^7.0",
+    "symfony/http-foundation": "^6.4 || ^7.0",
+    "symfony/dependency-injection": "^6.4 || ^7.0",
+    "symfony/config": "^6.4 || ^7.0",
+    "symfony/console": "^6.4 || ^7.0",
+    "symfony/event-dispatcher": "^6.4 || ^7.0",
+    "symfony/security-core": "^6.4 || ^7.0",
+    "symfony/monolog-bundle": "^3.8"
   },
   "suggest": {
     "monolog/monolog": "To log API and other requests/responses",
@@ -38,7 +47,8 @@
     "elastic/ecs-logging": "To save logs familiary to ECS logging",
     "open-telemetry/sdk": "To use OpenTelemetry for log traces",
     "open-telemetry/exporter-otlp": "To use OpenTelemetry for log traces",
-    "open-telemetry/transport-grpc": "To use OpenTelemetry via GRPC"
+    "open-telemetry/transport-grpc": "To use OpenTelemetry via GRPC",
+    "symfony/framework-bundle": "To integrate the logger into a Symfony application via UlovDomovLoggingBundle"
   },
   "scripts": {
     "install": "composer install --no-interaction --no-progress --prefer-dist",
