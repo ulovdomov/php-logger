@@ -21,10 +21,12 @@ final class BundleBootTest extends TestCase
         ]);
         $kernel->boot();
 
-        $contextService = $kernel->getContainer()->get('ulov_domov_logging.context_service');
+        try {
+            $contextService = $kernel->getContainer()->get('ulov_domov_logging.context_service');
 
-        self::assertInstanceOf(LoggerContextService::class, $contextService);
-
-        $kernel->shutdown();
+            self::assertInstanceOf(LoggerContextService::class, $contextService);
+        } finally {
+            $kernel->shutdown();
+        }
     }
 }

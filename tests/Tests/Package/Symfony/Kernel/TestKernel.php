@@ -10,12 +10,16 @@ use UlovDomov\Logging\Symfony\Bundle\UlovDomovLoggingBundle;
 
 final class TestKernel extends Kernel
 {
+    private readonly string $uniqueId;
+
     /**
      * @param array<string, mixed> $loggingConfig
      */
     public function __construct(private readonly array $loggingConfig)
     {
         parent::__construct('test', false);
+
+        $this->uniqueId = \uniqid('', true);
     }
 
     /**
@@ -46,11 +50,11 @@ final class TestKernel extends Kernel
 
     public function getCacheDir(): string
     {
-        return \sys_get_temp_dir() . '/ud-logging-bundle-test/cache/' . \spl_object_id($this);
+        return \sys_get_temp_dir() . '/ud-logging-bundle-test/cache/' . $this->uniqueId;
     }
 
     public function getLogDir(): string
     {
-        return \sys_get_temp_dir() . '/ud-logging-bundle-test/log';
+        return \sys_get_temp_dir() . '/ud-logging-bundle-test/log/' . $this->uniqueId;
     }
 }
