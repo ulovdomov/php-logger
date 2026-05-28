@@ -5,6 +5,11 @@ includes:
 
 parameters:
     level: 9
+    # Ignore patterns are version-fragile here: composer.lock is gitignored, so CI
+    # resolves dependencies per PHP version and a bumped dep (e.g. nette/security
+    # typing IIdentity::getId()) can make an ignore pattern stop matching. Tolerate
+    # unmatched ignores instead of failing the whole matrix on them.
+    reportUnmatchedIgnoredErrors: false
     tmpDir: ../temp/.php-stan-cache
     resultCachePath: %currentWorkingDirectory%/temp/.php-stan-cache/resultCache.php
     paths:
