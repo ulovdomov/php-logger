@@ -16,6 +16,9 @@ use UlovDomov\Logging\OpenTelemetry\Metrics\Meter;
 use UlovDomov\Logging\OpenTelemetry\Metrics\Store\JsonFileMetricStore;
 use UlovDomov\Logging\OpenTelemetry\OpenTelemetryClient;
 use UlovDomov\Logging\OpenTelemetry\Resources\Detectors\ContextResourceDetector;
+use UlovDomov\Logging\OpenTelemetry\Resources\Detectors\SymfonyHttpResourceDetector;
+use UlovDomov\Logging\OpenTelemetry\Resources\Detectors\SymfonyKernelResourceDetector;
+use UlovDomov\Logging\OpenTelemetry\Resources\Detectors\SymfonySecurityResourceDetector;
 use UlovDomov\Logging\OpenTelemetry\Resources\ResourceDetector;
 use UlovDomov\Logging\OpenTelemetry\Traces\Tracer;
 use UlovDomov\Logging\OpenTelemetry\TransportType;
@@ -144,6 +147,12 @@ final class UlovDomovLoggingBundle extends AbstractBundle
         ]);
         $clientDef->setAutowired(false);
         $builder->setDefinition(OpenTelemetryClient::class, $clientDef);
+
+        foreach ([SymfonyKernelResourceDetector::class, SymfonyHttpResourceDetector::class, SymfonySecurityResourceDetector::class] as $detectorClass) {
+            $detectorDef = new Definition($detectorClass);
+            $detectorDef->setAutowired(true);
+            $builder->setDefinition($detectorClass, $detectorDef);
+        }
 
         if ($tracerEnabled) {
             $tracerDef = new Definition(Tracer::class, [

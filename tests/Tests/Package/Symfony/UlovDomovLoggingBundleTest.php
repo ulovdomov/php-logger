@@ -118,6 +118,37 @@ final class UlovDomovLoggingBundleTest extends TestCase
         );
     }
 
+    public function testSymfonyDetectorsRegisteredWhenOtelEnabled(): void
+    {
+        $builder = $this->buildContainer([
+            'open_telemetry' => [
+                'name' => 'svc',
+                'traces' => ['url' => 'http://collector:4317', 'type' => 'grpc'],
+            ],
+        ]);
+
+        self::assertTrue(
+            $builder->hasDefinition(
+                \UlovDomov\Logging\OpenTelemetry\Resources\Detectors\SymfonyKernelResourceDetector::class,
+            ),
+        );
+        self::assertTrue(
+            $builder->hasDefinition(
+                \UlovDomov\Logging\OpenTelemetry\Resources\Detectors\SymfonyHttpResourceDetector::class,
+            ),
+        );
+        self::assertTrue(
+            $builder->hasDefinition(
+                \UlovDomov\Logging\OpenTelemetry\Resources\Detectors\SymfonySecurityResourceDetector::class,
+            ),
+        );
+
+        $kernelDetector = $builder->getDefinition(
+            \UlovDomov\Logging\OpenTelemetry\Resources\Detectors\SymfonyKernelResourceDetector::class,
+        );
+        self::assertTrue($kernelDetector->isAutowired());
+    }
+
     /**
      * @throws OutOfBoundsException
      */
