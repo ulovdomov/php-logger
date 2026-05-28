@@ -22,6 +22,7 @@ parameters:
         uncheckedExceptionClasses:
             - 'LogicException'
             - 'PHPUnit\Framework\Exception'
+            - 'Symfony\Component\HttpFoundation\Exception\BadRequestException'
         checkedExceptionClasses:
             - 'Exception'
     ignoreErrors:

@@ -2,6 +2,7 @@
 
 namespace UlovDomov\Logging\Symfony\Bundle;
 
+use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -29,43 +30,29 @@ final class UlovDomovLoggingBundle extends AbstractBundle
     {
         $transportTypes = ['grpc', 'http', 'http-protobuf', 'file', 'null'];
 
-        $definition->rootNode()
-            ->children()
-                ->scalarNode('environment')->defaultNull()->end()
-                ->arrayNode('tags')
-                    ->defaultValue([])
-                    ->scalarPrototype()->end()
-                ->end()
-                ->arrayNode('open_telemetry')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->scalarNode('name')->defaultValue('unknown-ud-app')->end()
-                        ->scalarNode('instance')->defaultNull()->end()
-                        ->scalarNode('version')->defaultValue('0.0.0')->end()
-                        ->scalarNode('namespace')->defaultValue('ud-php-app')->end()
-                        ->arrayNode('resource_detectors')
-                            ->defaultValue([])
-                            ->scalarPrototype()->end()
-                        ->end()
-                        ->arrayNode('traces')
-                            ->addDefaultsIfNotSet()
-                            ->children()
-                                ->scalarNode('url')->defaultNull()->end()
-                                ->enumNode('type')->values($transportTypes)->defaultValue('grpc')->end()
-                            ->end()
-                        ->end()
-                        ->arrayNode('metrics')
-                            ->addDefaultsIfNotSet()
-                            ->children()
-                                ->scalarNode('url')->defaultNull()->end()
-                                ->scalarNode('prefix')->defaultValue('udapp')->end()
-                                ->enumNode('type')->values($transportTypes)->defaultValue('grpc')->end()
-                                ->scalarNode('store')->defaultNull()->end()
-                            ->end()
-                        ->end()
-                    ->end()
-                ->end()
-            ->end();
+        /** @var ArrayNodeDefinition $rootNode */
+        $rootNode = $definition->rootNode();
+        $root = $rootNode->children();
+
+        $root->scalarNode('environment')->defaultNull();
+        $root->arrayNode('tags')->defaultValue([])->scalarPrototype();
+
+        $openTelemetry = $root->arrayNode('open_telemetry')->addDefaultsIfNotSet()->children();
+        $openTelemetry->scalarNode('name')->defaultValue('unknown-ud-app');
+        $openTelemetry->scalarNode('instance')->defaultNull();
+        $openTelemetry->scalarNode('version')->defaultValue('0.0.0');
+        $openTelemetry->scalarNode('namespace')->defaultValue('ud-php-app');
+        $openTelemetry->arrayNode('resource_detectors')->defaultValue([])->scalarPrototype();
+
+        $traces = $openTelemetry->arrayNode('traces')->addDefaultsIfNotSet()->children();
+        $traces->scalarNode('url')->defaultNull();
+        $traces->enumNode('type')->values($transportTypes)->defaultValue('grpc');
+
+        $metrics = $openTelemetry->arrayNode('metrics')->addDefaultsIfNotSet()->children();
+        $metrics->scalarNode('url')->defaultNull();
+        $metrics->scalarNode('prefix')->defaultValue('udapp');
+        $metrics->enumNode('type')->values($transportTypes)->defaultValue('grpc');
+        $metrics->scalarNode('store')->defaultNull();
     }
 
     /**

@@ -11,9 +11,6 @@ require_once __DIR__ . '/../../../../vendor/autoload.php';
 
 final class SymfonyHttpResourceDetectorTest extends TestCase
 {
-    /**
-     * @throws \Symfony\Component\HttpFoundation\Exception\BadRequestException
-     */
     public function testCollectsRequestMetadata(): void
     {
         $request = Request::create('http://example.com/orders/42?page=2', 'POST');
