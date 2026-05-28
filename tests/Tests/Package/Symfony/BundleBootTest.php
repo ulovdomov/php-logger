@@ -29,4 +29,28 @@ final class BundleBootTest extends TestCase
             $kernel->shutdown();
         }
     }
+
+    /**
+     * @throws \Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException
+     */
+    public function testKernelCompilesWithOpenTelemetryEnabled(): void
+    {
+        $kernel = new TestKernel([
+            'environment' => 'test',
+            'open_telemetry' => [
+                'name' => 'boot-test',
+                'traces' => ['url' => 'http://collector:4317', 'type' => 'grpc'],
+                'metrics' => ['url' => 'http://collector:4317', 'type' => 'grpc'],
+            ],
+        ]);
+        $kernel->boot();
+
+        try {
+            $contextService = $kernel->getContainer()->get('ulov_domov_logging.context_service');
+
+            self::assertInstanceOf(LoggerContextService::class, $contextService);
+        } finally {
+            $kernel->shutdown();
+        }
+    }
 }
