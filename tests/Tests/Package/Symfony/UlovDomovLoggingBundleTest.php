@@ -75,4 +75,69 @@ final class UlovDomovLoggingBundleTest extends TestCase
         self::assertSame([], $context->getArgument('$tags'));
         self::assertNull($context->getArgument('$environment'));
     }
+
+    public function testTracerAndMeterAbsentWhenNoUrls(): void
+    {
+        $builder = $this->buildContainer([
+            'open_telemetry' => ['name' => 'svc'],
+        ]);
+
+        self::assertFalse($builder->hasDefinition(\UlovDomov\Logging\OpenTelemetry\Traces\Tracer::class));
+        self::assertFalse($builder->hasDefinition(\UlovDomov\Logging\OpenTelemetry\Metrics\Meter::class));
+        self::assertFalse($builder->hasDefinition(\UlovDomov\Logging\OpenTelemetry\OpenTelemetryClient::class));
+    }
+
+    /**
+     * @throws OutOfBoundsException
+     */
+    public function testTracesWiringWhenTracesUrlSet(): void
+    {
+        $builder = $this->buildContainer([
+            'open_telemetry' => [
+                'name' => 'svc',
+                'traces' => ['url' => 'http://collector:4317', 'type' => 'grpc'],
+            ],
+        ]);
+
+        self::assertTrue($builder->hasDefinition(\UlovDomov\Logging\OpenTelemetry\OpenTelemetryClient::class));
+        self::assertTrue($builder->hasDefinition(\UlovDomov\Logging\OpenTelemetry\Resources\ResourceDetector::class));
+        self::assertTrue(
+            $builder->hasDefinition(
+                \UlovDomov\Logging\OpenTelemetry\Resources\Detectors\ContextResourceDetector::class,
+            ),
+        );
+        self::assertTrue($builder->hasDefinition(\UlovDomov\Logging\OpenTelemetry\Traces\Tracer::class));
+
+        $console = $builder->getDefinition(\UlovDomov\Logging\Console\TracesConsoleLogger::class);
+        self::assertArrayHasKey('kernel.event_subscriber', $console->getTags());
+
+        $contextService = $builder->getDefinition(LoggerContextService::class);
+        self::assertInstanceOf(
+            \Symfony\Component\DependencyInjection\Reference::class,
+            $contextService->getArgument('$tracer'),
+        );
+    }
+
+    /**
+     * @throws OutOfBoundsException
+     */
+    public function testMetricsWiringWithJsonStore(): void
+    {
+        $builder = $this->buildContainer([
+            'open_telemetry' => [
+                'name' => 'svc',
+                'metrics' => ['url' => 'http://collector:4317', 'type' => 'grpc', 'store' => 'json'],
+            ],
+        ]);
+
+        self::assertTrue($builder->hasDefinition(\UlovDomov\Logging\OpenTelemetry\Metrics\Meter::class));
+        self::assertTrue($builder->hasDefinition('ulov_domov_logging.metrics_store'));
+        self::assertFalse($builder->hasDefinition(\UlovDomov\Logging\OpenTelemetry\Traces\Tracer::class));
+
+        $contextService = $builder->getDefinition(LoggerContextService::class);
+        self::assertInstanceOf(
+            \Symfony\Component\DependencyInjection\Reference::class,
+            $contextService->getArgument('$meter'),
+        );
+    }
 }
