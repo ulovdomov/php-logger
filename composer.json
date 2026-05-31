@@ -51,7 +51,6 @@
     "symfony/framework-bundle": "To integrate the logger into a Symfony application via UlovDomovLoggingBundle"
   },
   "scripts": {
-    "install": "composer install --no-interaction --no-progress --prefer-dist",
     "cs": "mkdir -p temp/.php-codesniffer-cache && vendor/bin/phpcs --standard=tools/phpcs.xml src tests",
     "cs-fix": "mkdir -p temp/.php-codesniffer-cache && phpcbf --standard=tools/phpcs.xml src tests",
     "phpstan": "mkdir -p temp/.php-stan-cache && phpstan analyse -c tools/phpstan.neon --memory-limit=1024M",
