@@ -53,6 +53,57 @@ logger:
         app: 'data-source'                    # specific tags for app
 ```
 
+## Symfony bundle
+
+For Symfony applications, register `UlovDomov\Logging\Symfony\Bundle\UlovDomovLoggingBundle` instead of the Nette extension. It registers the same services (`LoggerContextService`, OpenTelemetry tracer/meter, the Monolog context processor and console tracing) following the same conditional rules.
+
+1. Register the bundle in `config/bundles.php`:
+
+```php
+return [
+    // ...
+    UlovDomov\Logging\Symfony\Bundle\UlovDomovLoggingBundle::class => ['all' => true],
+];
+```
+
+2. Configure it in `config/packages/ulov_domov_logging.yaml`:
+
+```yaml
+ulov_domov_logging:
+    environment: '%kernel.environment%'       # default is: null
+    tags:
+        app: 'data-source'                    # specific tags for app
+    open_telemetry:
+        name: 'name-of-my-app'                # app name for open-telemetry
+        version: '1.0.0'                      # version of app (default: 0.0.0)
+        namespace: 'ud-php-app'               # namespace of app (default: ud-php-app)
+        resource_detectors:                   # service ids of custom ResourceDetectorInterface implementations
+            - 'UlovDomov\Logging\OpenTelemetry\Resources\Detectors\SymfonyHttpResourceDetector'
+            - 'UlovDomov\Logging\OpenTelemetry\Resources\Detectors\SymfonySecurityResourceDetector'
+        traces:
+            url: 'https://example.com:4317'   # endpoint URL address with port (this enables traces)
+            type: 'grpc'                      # transport types: grpc, http, http-protobuf, file, null
+        metrics:
+            url: 'https://example.com:4317'   # endpoint URL address with port (this enables metrics)
+            type: 'grpc'
+            prefix: 'udapp'                   # prefix for all metric names
+            store: 'json'                     # null | 'json' | a MetricValueStore service id
+```
+
+Notes specific to the Symfony bundle:
+
+- Configuration keys are `snake_case` (`open_telemetry`, `resource_detectors`, ...). The conditional rules match the Nette extension: a `traces.url` enables the `Tracer`, a `metrics.url` enables the `Meter`, and either one enables the OpenTelemetry client and resource detectors.
+- `LoggerContextService` is registered for autowiring and is also available via the public alias `ulov_domov_logging.context_service`.
+- Symfony-specific resource detectors are provided and registered as services when OpenTelemetry is enabled; opt into them by listing their FQCN in `resource_detectors`:
+  - `UlovDomov\Logging\OpenTelemetry\Resources\Detectors\SymfonyKernelResourceDetector`
+  - `UlovDomov\Logging\OpenTelemetry\Resources\Detectors\SymfonyHttpResourceDetector` (requires `symfony/http-foundation`, present in any HTTP app)
+  - `UlovDomov\Logging\OpenTelemetry\Resources\Detectors\SymfonySecurityResourceDetector` (requires a security component providing `TokenStorageInterface`, e.g. `symfony/security-bundle`)
+
+  Detectors you do not list are left unreferenced and removed during container compilation, so an OpenTelemetry-enabled app without the security bundle compiles fine as long as it does not opt into `SymfonySecurityResourceDetector`.
+- Console command tracing is wired automatically (the `TracesConsoleLogger` is tagged `kernel.event_subscriber`) whenever `traces.url` is set.
+- The Monolog context processor is tagged `monolog.processor`, so it attaches to the handlers configured by `symfony/monolog-bundle` automatically. The Symfony bundle does not register `MonologLoggerFactory` — Symfony's MonologBundle owns handler configuration.
+- Sentry: as with Nette, the bundle does not auto-register `UlovDomov\Logging\Sentry\LoggerContextIntegration`. Wire it into your `sentry/sentry-symfony` setup manually; `LoggerContextService` is injectable wherever you need it.
+
 ## Usage
 
 ### DI service - `LoggerContextService`
