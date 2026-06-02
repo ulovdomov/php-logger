@@ -58,13 +58,33 @@ final class OpenTelemetryClient
     {
         $endpoint = \rtrim($url, '/') . OtlpUtil::path($signal, $type->getProtocol());
 
+        // Fail-fast: export probíhá synchronně na request cestě (BatchSpanProcessor::shutdown).
+        // Nedostupný collector by jinak s defaultem (10s timeout × 3 retry) blokoval request na desítky
+        // sekund a vyčerpal FPM workery. Krátký timeout + žádný retry to omezí na jednotky ms.
+        $timeout = 0.25;
+        $retryDelay = 100;
+        $maxRetries = 0;
+
         return match ($type) {
             TransportType::File => new FileTransport($fileName, $url),
             TransportType::Grpc => (new GrpcTransportFactory())->create($endpoint),
-            TransportType::Http => (new OtlpHttpTransportFactory())->create($endpoint, ContentTypes::JSON),
+            TransportType::Http => (new OtlpHttpTransportFactory())->create(
+                $endpoint,
+                ContentTypes::JSON,
+                [],
+                null,
+                $timeout,
+                $retryDelay,
+                $maxRetries,
+            ),
             TransportType::HttpProtobuf => (new OtlpHttpTransportFactory())->create(
                 $endpoint,
                 ContentTypes::PROTOBUF,
+                [],
+                null,
+                $timeout,
+                $retryDelay,
+                $maxRetries,
             ),
             TransportType::Null => new NullTransport(),
         };
